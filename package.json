@@ -1,5 +1,5 @@
 {
-  "name": "mcp_server",
+  "name": "wowok_mcp",
   "version": "1.0.2",
   "description": "MCP server for WoWok: Create, collaborate, and transact on your own terms with the AI-driven web3 collaboration protocol.",
   "main": "./src/index.ts",
