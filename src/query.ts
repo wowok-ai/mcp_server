@@ -48,3 +48,51 @@ export const QueryEventSchema = z.object({
 }).describe('Query event data');
 
 
+export const QueryArbVotingSchema = z.object({
+    object: z.string().nonempty().describe("The address of the Arb object."),
+    address: z.string().nonempty().describe('The address has voted. ')
+});
+
+export const QueryDemandPresenterSchema = z.object({
+    object: z.string().nonempty().describe("The address of the Demand object."),
+    address: z.string().nonempty().describe('The address of the Service object recommended by anyone')
+}).describe("");
+
+export const QueryPermissionEntitySchema = z.object({
+    object: z.string().nonempty().describe("The address of the Permission object."),
+    address: z.string().nonempty().describe('The address to query permissions. ')
+});
+
+export const QueryMachineNodeSchema = z.object({
+    object: z.string().nonempty().describe("The address of the Machine object."),
+    name: z.string().nonempty().describe('The node name. ')
+});
+
+export const QueryServiceSaleSchema = z.object({
+    object: z.string().nonempty().describe("The address of the Service object."),
+    name: z.string().nonempty().describe('The sales item name. ')
+});
+
+export const QueryProgressHistorySchema = z.object({
+    object: z.string().nonempty().describe("The address of the Progress object."),
+    index: z.number().int().min(0).describe('Historical data index. Start at 0 and add 1 for each new record.')
+});
+
+export const QueryTreasuryHistorySchema = z.object({
+    object: z.string().nonempty().describe("The address of the Treasury object."),
+    index: z.number().int().min(0).describe('Historical data index. Start at 0 and add 1 for each new record.')
+});
+
+export const QueryRepositoryDataSchema = z.object({
+    object: z.string().nonempty().describe("The address of the Repository object."),
+    address: z.union([
+        z.string().nonempty().describe('The address that own the data. '),
+        z.number().int().min(0).describe('number converted to address, such as time.')
+    ]),
+    name: z.string().nonempty().describe('Data field name.')
+});
+
+export const QueryMarkTagSchema = z.object({
+    object: z.string().nonempty().describe("The address of the PersonalMark object that privately owned by a user."),
+    address: z.string().nonempty().describe('The address to query the name and tags. ')
+});
