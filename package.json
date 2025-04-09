@@ -1,6 +1,6 @@
 {
   "name": "wowok_mcp",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "MCP server for WoWok: Create, collaborate, and transact on your own terms with the AI-driven web3 collaboration protocol.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -14,7 +14,41 @@
   "files": [
     "build"
   ],
-  "keywords": [],
+  "keywords": [
+    "web3",
+    "AI",
+    "wowok",
+    "sui",
+    "collaboration",
+    "protocol",
+    "WOW",
+    "permission",
+    "guard",
+    "service",
+    "order",
+    "machine",
+    "progress",
+    "passport",
+    "demand",
+    "reward",
+    "discount",
+    "mark",
+    "message",
+    "vote",
+    "tags",
+    "entity",
+    "resource",
+    "grantor",
+    "grantee",
+    "move language",
+    "move",
+    "treasury",
+    "payment",
+    "arbitration",
+    "oracle",
+    "AI agent tool",
+    "MCP"
+  ],
   "author": "wowok",
   "license": "ISC",
   "dependencies": {
@@ -24,6 +58,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.15",
+    "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }
 }

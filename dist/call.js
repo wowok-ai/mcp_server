@@ -8,20 +8,23 @@ const PermissionIndexSchema = z.union([z.literal(WOWOK.PermissionIndex.user_defi
         and the biz permission number that user defined is greater than or equal to ${WOWOK.PermissionIndex.user_defined_start}`);
 const SafeUint8ArraySchema = z.custom((val) => Object.prototype.toString.call(val) === "[object Uint8Array]");
 const CallOldObjectSchema = z.object({
-    address: z.string().describe('The address of the object.')
+    address: z.string().nonempty().describe('The address of the object.')
+});
+const NamedObjectSchema = z.object({
+    name: z.string().optional().describe('The name of the new object.'),
+    tags: z.array(z.string().nonempty()).optional().describe('A list of tags for the new object.')
 });
 const NewObjectSchema = z.object({
-    name: z.string().optional().describe('The name of the new object.'),
-    tags: z.array(z.string()).optional().describe('A list of tags for the new object.')
+    namedNew: NamedObjectSchema.optional().describe('Newly named wowok object.'),
 });
-const CallNewObjectWithDescriptionSchema = z.object({
-    namedNew: NewObjectSchema.describe('Newly named wowok object.'),
+const NewObjectWithDescriptionSchema = z.object({
+    namedNew: NamedObjectSchema.optional().describe('Newly named wowok object.'),
     description: z.string().optional().describe('Description of the newly named wowok object.')
-});
+}).optional();
 const ValueTypeSchema = z.nativeEnum(WOWOK.ValueType).describe('The value of the underlying data type of the Wowok protocol.');
 const GuardIndentifierSchema = z.number().int().min(1).max(255);
 const CallObjectSchema = z.union([CallOldObjectSchema, NewObjectSchema]);
-const CallObjectWithDescriptionSchema = z.union([CallNewObjectWithDescriptionSchema, CallOldObjectSchema]);
+const CallObjectWithDescriptionSchema = z.union([NewObjectWithDescriptionSchema, CallOldObjectSchema]);
 const TokenBalanceSchema = z.union([z.string(), z.number().int().min(0)]).describe('The number of tokens.');
 const PaymentIndexSchema = z.union([z.string(), z.number().int().min(0)]).describe('Transfer number.');
 const PaymentRemarkSchema = z.string().default('').describe('Notes for the transfer.');
@@ -43,8 +46,8 @@ const RepositoryOperationSchema = z.union([
     }).describe('remove all the repositories.')
 ]);
 const OrderCryptoInfoSchema = z.object({
-    customer_pubkey: z.string().nonempty().optional().describe('The public key for encrypting the order information'),
-    customer_info_crypt: z.string().nonempty().optional().describe('Encrypted order information'),
+    customer_pubkey: z.string().nonempty().describe('The public key for encrypting the order information'),
+    customer_info_crypt: z.string().describe('Encrypted order information'),
 }).optional().describe('The order sensitive information Encrypted data');
 const GuardNodeSchema = z.union([
     z.object({
@@ -170,10 +173,10 @@ export const CallDemandDataSchema = z.object({
     bounty: z.union([z.object({
             op: z.literal('add').describe('Add new bounty'),
             object: z.union([z.object({
-                    address: z.string().describe('The object address owned by the transaction signer.')
+                    address: z.string().nonempty().describe('The object address owned by the transaction signer.')
                 }),
                 z.object({ balance: TokenBalanceSchema }).describe('The number of assets of the token type that owned by the transaction signer, If the bounty type is 0x2::coin::Coin<... >')
-            ]).optional().describe('Demand bounty that transaction signature paid')
+            ]).describe('Demand bounty that transaction signature paid')
         }), z.object({
             op: z.literal('reward').describe('Reward bounty to the service recommender'),
             service: z.string().describe('The address of the Service object.')
@@ -198,7 +201,8 @@ export const CallDemandDataSchema = z.object({
         'Once Guard is set, the service is recommended to Demand only after the Guard condition is verified.')
 }).describe('Data definition that operates on the Demand object.');
 export const CallGuardDataSchema = z.object({
-    namedNew: NewObjectSchema.optional().describe('Newly named Guard object.'),
+    root: GuardNodeSchema,
+    namedNew: NamedObjectSchema.optional().describe('Newly named Guard object.'),
     description: z.string().optional().describe('Description of the Guard object.'),
     table: z.array(z.object({
         identifier: GuardIndentifierSchema.describe('Identifier for a constant or a witness'),
@@ -206,7 +210,6 @@ export const CallGuardDataSchema = z.object({
         value_type: ValueTypeSchema,
         value: z.any().optional().describe('Data value for a constant, Ignored if the data is a witness.')
     })).optional().describe('Data table for Const or Witness'),
-    root: GuardNodeSchema
 }).describe('Data definition that operates on the Guard object.');
 export const CallMachineDataSchema = z.object({
     object: CallObjectSchema.optional().describe('Modify the existing Machine object or build a new one.'),
@@ -269,7 +272,7 @@ export const CallMachineDataSchema = z.object({
     progress_new: z.object({
         task_address: z.string().nonempty().optional().describe('The task that the Progress object performs, such as an Order object address.' +
             'Once a task for the Progress object is set, it cannot be changed again.'),
-        namedNew: NewObjectSchema.optional().describe('Newly named Progress object.'),
+        namedNew: NamedObjectSchema.optional().describe('Newly named Progress object.'),
     }).optional().describe('Create a new Progress object for the Machine object. ' +
         'The new Progress uses the processes, operations, and permissions already defined by the Machine object.' +
         'If the Machine Object is not published, the creation fails.'),
@@ -334,7 +337,7 @@ export const CallMachineDataSchema = z.object({
     bPaused: z.boolean().optional().describe('If Machine is already published, the creation of new Progress is paused if True, and new Progress is allowed if False. ' +
         'The generated Progress is not affected.'),
     clone_new: z.object({
-        namedNew: NewObjectSchema.optional().describe('Newly named Machine object.'),
+        namedNew: NamedObjectSchema.optional().describe('Newly named Machine object.'),
     }).optional().describe('The promised Settings cannot be changed after the Machine is published. ' +
         'Clone allows it to be retained to copy a new Machine, inherit its Settings, and can be modified and released at any time.'),
 }).describe('Data definition that operates on the Machine object.');
@@ -503,7 +506,7 @@ export const CallArbitrationDataSchema = z.object({
             fee: TokenBalanceSchema
         }),
         guard: GuardFetchSchema.optional().describe('Specify the Guard to validate.'),
-        namedNew: NewObjectSchema.optional().describe('Newly named Arb object.'),
+        namedNew: NamedObjectSchema.optional().describe('Newly named Arb object.'),
     }).optional().describe('Create a new Arb object.'),
     arb_withdraw_fee: z.object({
         arb: z.string().optional().describe('The address of the Arb object.' +
@@ -547,7 +550,7 @@ export const CallArbitrationDataSchema = z.object({
             guards: z.array(z.string().nonempty()).describe('Addresses of the Guard objects')
         }).describe('Remove voting guards.'),
         z.object({
-            op: z.literal('removeal'),
+            op: z.literal('removeall'),
         }).describe('Remove all the voting guards.')
     ]).optional().describe('Manage voting guards and their vote weights. ' +
         'If a certain Guard authentication is passed, the vote weight corresponding to the Guard is cast.'),
@@ -598,7 +601,7 @@ export const CallTreasuryDataSchema = z.object({
             guards: z.array(z.string().nonempty()).describe('Addresses of the Guard objects')
         }).describe('Remove withdraw guards.'),
         z.object({
-            op: z.literal('removeal'),
+            op: z.literal('removeall'),
         }).describe('Remove all the withdraw guards.')
     ]).optional().describe('Manage withdraw guards and their maximum withdrawal amount. '),
     withdraw_mode: z.union([
@@ -630,7 +633,7 @@ export const CallServiceDataSchema = z.object({
             ]).describe('Discount type'),
             off: z.number().int().min(0).describe('Discount value. If Percentage-off coupon, -off%; If Flat-rate coupon, -off.'),
             duration_minutes: z.number().int().min(1).default(30 * 24 * 60).describe('The duration of the coupon validity period, in minutes.'),
-            time_start: z.number().int().optional().describe('Discount coupon effective time. undefined if current time.'),
+            time_start: z.number().int().optional().describe('Discount coupon effective time(ms). undefined if the current time.'),
             price_greater: z.union([z.number().int().min(0), z.string()]).optional().describe('Discount effective condition: the amount is greater than or equal to this value.')
         })
     })).optional().describe('Send discount coupons to the addresses.'),
@@ -657,7 +660,7 @@ export const CallServiceDataSchema = z.object({
     arbitration: z.union([
         z.object({
             op: z.union([z.literal('add'), z.literal('set')]),
-            treasuries: z.array(z.object({
+            arbitrations: z.array(z.object({
                 address: z.string().nonempty().describe('The address of the Arbitration object.'),
                 token_type: z.string().nonempty().describe('The payment token type of the Arbitration object.'),
             }))
@@ -709,13 +712,13 @@ export const CallServiceDataSchema = z.object({
         machine: z.string().nonempty().optional().describe('The address of the Machine object. The value must be the same as the value of the machine field of the Service object.'),
         customer_info_crypto: OrderCryptoInfoSchema,
         guard: GuardFetchSchema.optional().describe('The address of the Guard object.'),
-        namedNewOrder: NewObjectSchema.optional().describe('Newly named Order object.'),
-        namedNewProgress: NewObjectSchema.optional().describe('Newly named Progress object.'),
+        namedNewOrder: NamedObjectSchema.optional().describe('Newly named Order object.'),
+        namedNewProgress: NamedObjectSchema.optional().describe('Newly named Progress object.'),
     }).optional().describe('Create a new order.'),
     order_agent: z.object({
         order: z.string().optional().describe('The address of the Order object.' +
             'If undefined, the newly created Order object in the current transaction is used.'),
-        agents: z.array(z.string().optional().describe('The address of the agent.')),
+        agents: z.array(z.string().describe('The address of the agent.')),
         progress: z.string().optional().describe('The address of the Progress object.' +
             'If undefined, the newly created Progress object in the current transaction is used.'),
     }).optional().describe('Set up an agent for the order. The agent may exercise the power on behalf of the order owner.'),
@@ -762,7 +765,7 @@ export const CallServiceDataSchema = z.object({
     bPaused: z.boolean().optional().describe('If True, new Order objects are allowed to be created; if False, no new Order objects are allowed to be created.'),
     clone_new: z.object({
         token_type_new: z.string().optional().describe("The new type of token for the Service object."),
-        namedNew: NewObjectSchema.optional().describe('Newly named Service object.'),
+        namedNew: NamedObjectSchema.optional().describe('Newly named Service object.'),
     }).optional().describe('Clone a new Service object. Inheriting the original Settings (but not published yet), and could change the type of payment token.'),
 }).describe('Data definition that operates on the Service object.');
 export const CallPersonalDataSchema = z.object({
@@ -804,7 +807,7 @@ export const CallPersonalDataSchema = z.object({
             address: z.string().nonempty().describe('The address of the Resource object.')
         }).describe('Replace new marked addresses information by the owner.'),
         z.object({
-            op: z.literal('destory'),
+            op: z.literal('destroy'),
         }).describe('Delete all marked addresses information, and destory the current Resource object.'),
     ]).optional().describe('Naming and management of personal marks(Resource object).')
 }).describe('Data definition that operates on the Personal infomation.');
@@ -813,3 +816,64 @@ export const CallObjectPermissionDataSchema = z.object({
     new_permission: z.string().nonempty().describe('The address of the Permission object that Replaces the original Permission object.')
 }).describe('Batch modify the Permission object of wowok objects.' +
     'Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.');
+export const GuardWitness = z.object({
+    guard: z.array(z.string().nonempty().describe('The address of the Guard object.')).describe('All addresses of Guards.'),
+    witness: z.array(z.object({
+        guard: z.string().nonempty().describe('The address of the Guard object.'),
+        witness: z.any().describe('Value of this witness.'),
+        cmd: z.array(z.number().int().min(1)).describe('The witness is used in the query command.'),
+        cited: z.number().describe('Number of times the witness is cited'),
+        type: ValueTypeSchema.describe('The Value type of the witness'),
+        identifier: GuardIndentifierSchema.describe("The witness id in the Guard"),
+    })).describe('All the witness.')
+});
+export const CallGuardSchema = z.object({
+    data: CallGuardDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallDemandSchema = z.object({
+    data: CallDemandDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallRepositorySchema = z.object({
+    data: CallRepositoryDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallMachineSchema = z.object({
+    data: CallMachineDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallServiceSchema = z.object({
+    data: CallServiceDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallTreasurySchema = z.object({
+    data: CallTreasuryDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallPermissionSchema = z.object({
+    data: CallPermissionDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallArbitrationSchema = z.object({
+    data: CallArbitrationDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallPersonalSchema = z.object({
+    data: CallPersonalDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});
+export const CallObejctPermissionSchema = z.object({
+    data: CallObjectPermissionDataSchema,
+    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+});

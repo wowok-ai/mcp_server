@@ -53,7 +53,7 @@ export const QueryArbVotingSchema = z.object({
     address: z.string().nonempty().describe('The address has voted. ')
 });
 
-export const QueryDemandPresenterSchema = z.object({
+export const QueryDemandServiceSchema = z.object({
     object: z.string().nonempty().describe("The address of the Demand object."),
     address: z.string().nonempty().describe('The address of the Service object recommended by anyone')
 }).describe("");
