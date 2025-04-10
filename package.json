@@ -1,6 +1,6 @@
 {
   "name": "wowok_mcp",
-  "version": "1.0.8",
+  "version": "1.0.10",
   "description": "MCP server for WoWok: Maximization of utility and optimization of talent.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc",
-    "start": "npx tsx src/index.ts"
+    "start": "tsx src/index.ts"
   },
   "files": [
     "dist"
@@ -60,7 +60,7 @@
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
-    "@types/node": "^22.13.15",
+    "@types/node": "^22.7.5",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }

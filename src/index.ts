@@ -667,7 +667,8 @@ async function main() {
           throw error;
         }
     });
-        
+
+    console.log('WoWok MCP server started.')   
     await server.connect(transport);
 
     // Cleanup on exit
@@ -679,10 +680,17 @@ async function main() {
 }
 
 async function cleanup() {
-
+    console.log('WoWok MCP server closed.')  
 }
 
 main().catch((error) => {
     console.error("Server error:", error);
+    console.log('WoWok MCP server exited.') 
     process.exit(1);
+});
+
+process.stdin.on("close", async () => {
+    await cleanup();
+    await server.close();
+    process.exit(0);
 });
