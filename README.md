@@ -1,5 +1,5 @@
 # mcp_server
-MCP Server for WoWok that create, collaborate, and transact on your own terms with the AI-driven web3 collaboration protocol.
+MCP Server for WoWok:  ‌Maximization of utility and optimization of talent.
 
 Github: [https://github.com/wowok-ai/wowok](https://github.com/wowok-ai/wowok)   
 Wowok Agent for AI: [https://github.com/wowok-ai/wowok_agent](https://github.com/wowok-ai/wowok_agent)   
