@@ -9,6 +9,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc",
+    "watch": "tsc --watch",
     "start": "tsx src/index.ts"
   },
   "files": [

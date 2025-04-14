@@ -1,6 +1,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport,  } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListResourcesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema, ResourceTemplate, Tool, ToolSchema } from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListResourcesRequestSchema, ListResourceTemplatesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema, ResourceTemplate, Tool, ToolSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { query_objects, WOWOK, query_events, query_permission, query_table, call_guard, call_demand, call_machine, 
@@ -55,6 +55,14 @@ export enum ToolName {
     OP_REPLACE_PERMISSION_OBJECT = 'replace permission object'
 }
 
+export enum EventName {
+    new_arb = 'onNewArb events',
+    new_progress = 'onNewProgress events',
+    new_order = 'onNewOrder events',
+    present_service = 'OnPresentService events'
+}
+
+WOWOK.Protocol.Instance().use_network(WOWOK.ENTRYPOINT.testnet);
 // Create server instance
 const server = new Server({
     name: "wowok",
@@ -93,12 +101,6 @@ const RES: ResourceTemplate[] = [
         description: "query records of table data owned by the wowok object",
         mimeType:'text/plain'
     },
-    /*{
-        uriTemplate: 'wowok://table_item/{parent}{?key_type, key_value}',
-        name: ToolName.QUERY_TABLE_ITEM,
-        description: "query a record of table data owned by the wowok object",
-        mimeType:'text/plain'
-    },*/
     {
         uriTemplate: 'wowok://table_item/arb/{?object, address}',
         name: ToolName.QUERY_ARB_VOTING,
@@ -108,7 +110,7 @@ const RES: ResourceTemplate[] = [
     {
         uriTemplate: 'wowok://table_item/demand/{?object, address}',
         name: ToolName.QUERY_DEMAND_SERVICE,
-        description: "query service recommendation information by anyone in the Demand object.",
+        description: "query service recommendation information in the Demand object.",
         mimeType:'text/plain',
     },
     {
@@ -155,28 +157,34 @@ const RES: ResourceTemplate[] = [
     },
     {
         uriTemplate: 'wowok://events/onNewArb/{?cursor_eventSeq, cursor_txDigest, limit, order}',
-        name: 'onNewArb events',
+        name: EventName.new_arb,
         description: "query 'onNewArb' events",
         mimeType:'text/plain'
     },
     {
         uriTemplate: 'wowok://events/OnPresentService/{?cursor_eventSeq, cursor_txDigest, limit, order}',
-        name: 'OnPresentService events',
+        name: EventName.present_service,
         description: "query 'OnPresentService' events",
         mimeType:'text/plain'
     },
     {
         uriTemplate: 'wowok://events/OnNewProgress/{?cursor_eventSeq, cursor_txDigest, limit, order}',
-        name: 'OnNewProgress events',
+        name: EventName.new_progress,
         description: "query 'OnNewProgress' events",
         mimeType:'text/plain'
     },
                 {
         uriTemplate: 'wowok://events/OnNewOrder/{?cursor_eventSeq, cursor_txDigest, limit, order}',
-        name: 'OnNewOrder events',
+        name: EventName.new_order,
         description: "query 'OnNewOrder' events",
         mimeType:'text/plain'
     },
+    /*{
+        uriTemplate: 'wowok://table_item/{parent}{?key_type, key_value}',
+        name: ToolName.QUERY_TABLE_ITEM,
+        description: "query a record of table data owned by the wowok object",
+        mimeType:'text/plain'
+    },*/
 ];
 
 type EventParam = {
@@ -188,106 +196,106 @@ type EventParam = {
 
 async function main() {
     const transport = new StdioServerTransport();
-    server.setRequestHandler(ListResourcesRequestSchema, async () => {
-        return {RES}
+    server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
+        return {resourceTemplates:RES}
     });
 
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-        const uri: string = request.params.uri.toLowerCase();
+        const uri: string = request.params.uri;
 
         if (uri.startsWith("wowok://objects/")) {
-            const query = parseUrlParams<ObjectsQuery>(uri);
-            console.log(query);
+            var query = parseUrlParams<ObjectsQuery>(uri);
+            query.objects = query.objects.filter(v => WOWOK.IsValidAddress(v));
             const r = await query_objects(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_OBJECTS)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://permissions/")) {
             const query = parseUrlParams<PermissionQuery>(uri);
-            console.log(query);
             const r = await query_permission(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_PERMISSIONS)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://personal/")) {
             const query = parseUrlParams<PersonalQuery>(uri);
-            console.log(query);
             const r = await queryTableItem_Personal(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_PERSONAL)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_items/")) {
             const query = parseUrlParams<TableQuery>(uri);
-            console.log(query);
             const r = await query_table(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_TABLE_ITEMS)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/arb/")) {
             const query = parseUrlParams<QueryArbVoting>(uri);
-            console.log(query);
             const r = await queryTableItem_ArbVoting(query);
             return {tools:[], content:[JSON.stringify(r)]}
         } else if (uri.startsWith("wowok://table_item/demand/")) {
             const query = parseUrlParams<QueryDemandService>(uri);
-            console.log(query);
             const r = await queryTableItem_DemandService(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_DEMAND_SERVICE)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/service/")) {
             const query = parseUrlParams<QueryServiceSale>(uri);
-            console.log(query);
             const r = await queryTableItem_ServiceSale(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_SERVICE_SALE)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/machine/")) {
             const query = parseUrlParams<QueryMachineNode>(uri);
-            console.log(query);
             const r = await queryTableItem_MachineNode(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_MACHINE_NODE)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/repository/")) {
             const query = parseUrlParams<QueryRepositoryData>(uri);
-            console.log(query);
             const r = await queryTableItem_RepositoryData(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_REPOSITORY_DATA)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/permission/")) {
             const query = parseUrlParams<QueryPermissionEntity>(uri);
-            console.log(query);
             const r = await queryTableItem_PermissionEntity(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_PERMISSION_ENTITY)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/personalmark/")) {
             const query = parseUrlParams<QueryMarkTag>(uri);
-            console.log(query);
             const r = await queryTableItem_MarkTag(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_MARK_TAGS)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/treasury/")) {
             const query = parseUrlParams<QueryTreasuryHistory>(uri);
-            console.log(query);
             const r = await queryTableItem_TreasuryHistory(query);
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_TREASURY_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/progress/")) {
             const query = parseUrlParams<QueryProgressHistory>(uri);
-            console.log(query);
             const r = await queryTableItem_ProgressHistory(query);
-            return {tools:[], content:[JSON.stringify(r)]}
-        } else if (uri.startsWith("wowok://events/onnewarb/")) {
+            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_PROGRESS_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onnewarb/")) {
             const query = parseUrlParams<EventParam>(uri);
-            console.log(query);
             const r = await query_events({type:'OnNewArb', 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            return {tools:[], content:[JSON.stringify(r)]}
-        } else if (uri.startsWith("wowok://events/onpresentservice/")) {
+            const content = Object.assign(RES.find(v=>v.name===EventName.new_arb)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onpresentservice/")) {
             const query = parseUrlParams<EventParam>(uri);
-            console.log(query);
             const r = await query_events({type:'OnPresentService', 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            return {tools:[], content:[JSON.stringify(r)]}
-        } else if (uri.startsWith("wowok://events/onnewprogress/")) {
+            const content = Object.assign(RES.find(v=>v.name===EventName.present_service)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onnewprogress/")) {
             const query = parseUrlParams<EventParam>(uri);
-            console.log(query);
             const r = await query_events({type:'OnNewProgress', 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            return {tools:[], content:[JSON.stringify(r)]}
-        } else if (uri.startsWith("wowok://events/onneworder/")) {
+            const content = Object.assign(RES.find(v=>v.name===EventName.new_progress)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onneworder/")) {
             const query = parseUrlParams<EventParam>(uri);
-            console.log(query);
             const r = await query_events({type:'OnNewOrder', 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            return {tools:[], content:[JSON.stringify(r)]}
+            const content = Object.assign(RES.find(v=>v.name===EventName.new_order)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
         } 
 
         throw new Error(`Unknown resource: ${uri}`);
@@ -315,11 +323,11 @@ async function main() {
                 description: "query records of table data owned by the wowok object",
                 inputSchema: zodToJsonSchema(QueryTableItemsSchema)  as ToolInput,
             },
-            {
+            /*{
                 name: ToolName.QUERY_TABLE_ITEM,
                 description: "query a record of table data owned by the wowok object",
                 inputSchema: zodToJsonSchema(QueryTableItemSchema)  as ToolInput,
-            },
+            },*/
             {
                 name: ToolName.QUERY_PERSONAL,
                 description: "query personal information for an address",
@@ -332,7 +340,7 @@ async function main() {
             },
             {
                 name: ToolName.QUERY_DEMAND_SERVICE,
-                description: "query service recommendation information by anyone in the Demand object.",
+                description: "query service recommendation information in the Demand object.",
                 inputSchema: zodToJsonSchema(QueryDemandServiceSchema)  as ToolInput,
             },
             {
@@ -420,7 +428,7 @@ async function main() {
                 inputSchema: zodToJsonSchema(CallObjectPermissionDataSchema)  as ToolInput,
                 description: 'Batch modify the Permission object of wowok objects.' + 
                     'Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.'
-            },
+            }, 
         ]
         return {tools};
     });
@@ -434,7 +442,6 @@ async function main() {
           switch (request.params.name) {
             case ToolName.QUERY_OBJECTS: {
               const args = QueryObjectsSchema.parse(request.params.arguments);
-              console.log(args);
               const r = await query_objects(args);
               return {
                 content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -443,7 +450,6 @@ async function main() {
       
             case ToolName.QUERY_EVENTS: {
                 const args = QueryEventSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await query_events(args);
                 return {
                   content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -452,7 +458,6 @@ async function main() {
       
             case ToolName.QUERY_PERMISSIONS: {
                 const args = QueryPermissionSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await query_permission(args);
                 return {
                   content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -460,9 +465,8 @@ async function main() {
             }
 
             case ToolName.QUERY_PERSONAL: {
-                const args = QueryPermissionSchema.parse(request.params.arguments);
-                console.log(args);
-                const r = await query_permission(args);
+                const args = QueryPersonalSchema.parse(request.params.arguments);
+                const r = await queryTableItem_Personal(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                 };
@@ -470,7 +474,6 @@ async function main() {
       
             case ToolName.QUERY_TABLE_ITEMS: {
                 const args = QueryTableItemsSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await query_table(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -479,7 +482,6 @@ async function main() {
       
             case ToolName.QUERY_TABLE_ITEM: {
                 const args = QueryTableItemSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await query_table(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -487,7 +489,6 @@ async function main() {
             }
             case ToolName.QUERY_ARB_VOTING: {
               const args = QueryArbVotingSchema.parse(request.params.arguments);
-              console.log(args);
               const r = await queryTableItem_ArbVoting(args);
               return {
                 content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -496,7 +497,6 @@ async function main() {
       
             case ToolName.QUERY_MACHINE_NODE: {
                 const args = QueryMachineNodeSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await queryTableItem_MachineNode(args);
                 return {
                   content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -505,7 +505,6 @@ async function main() {
       
             case ToolName.QUERY_MARK_TAGS: {
                 const args = QueryMarkTagSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await queryTableItem_MarkTag(args);
                 return {
                   content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -514,7 +513,6 @@ async function main() {
 
             case ToolName.QUERY_PERMISSION_ENTITY: {
                 const args = QueryPermissionEntitySchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await queryTableItem_PermissionEntity(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -523,7 +521,6 @@ async function main() {
       
             case ToolName.QUERY_PROGRESS_HISTORY: {
                 const args = QueryProgressHistorySchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await queryTableItem_ProgressHistory(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -532,7 +529,6 @@ async function main() {
       
             case ToolName.QUERY_TREASURY_HISTORY: {
                 const args = QueryTreasuryHistorySchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await queryTableItem_TreasuryHistory(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -541,7 +537,6 @@ async function main() {
 
             case ToolName.QUERY_REPOSITORY_DATA: {
                 const args = QueryRepositoryDataSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await queryTableItem_RepositoryData(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -550,7 +545,6 @@ async function main() {
       
             case ToolName.QUERY_SERVICE_SALE: {
                 const args = QueryServiceSaleSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await queryTableItem_ServiceSale(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -559,7 +553,6 @@ async function main() {
       
             case ToolName.QUERY_DEMAND_SERVICE: {
                 const args = QueryDemandServiceSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await queryTableItem_DemandService(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -568,7 +561,6 @@ async function main() {
 
             case ToolName.OP_GUARD: {
                 const args = CallGuardSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_guard(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -577,7 +569,6 @@ async function main() {
       
             case ToolName.OP_DEMAND: {
                 const args = CallDemandSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_demand(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -586,7 +577,6 @@ async function main() {
       
             case ToolName.OP_MACHINE: {
                 const args = CallMachineSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_machine(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -595,7 +585,6 @@ async function main() {
 
             case ToolName.OP_SERVICE: {
                 const args = CallServiceSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_service(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -604,7 +593,6 @@ async function main() {
 
             case ToolName.OP_TREASURY: {
                 const args = CallTreasurySchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_treasury(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -613,7 +601,6 @@ async function main() {
 
             case ToolName.OP_ARBITRATION: {
                 const args = CallArbitrationSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_arbitration(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -622,7 +609,6 @@ async function main() {
 
             case ToolName.OP_PERMISSION: {
                 const args = CallPermissionSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_permission(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -631,7 +617,6 @@ async function main() {
       
             case ToolName.OP_PERSONAL: {
                 const args = CallPersonalSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_personal(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -640,7 +625,6 @@ async function main() {
 
             case ToolName.OP_REPLACE_PERMISSION_OBJECT: {
                 const args = CallObejctPermissionSchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_transfer_permission(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -649,7 +633,6 @@ async function main() {
 
             case ToolName.OP_REPOSITORY: {
                 const args = CallRepositorySchema.parse(request.params.arguments);
-                console.log(args);
                 const r = await call_repository(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -659,16 +642,17 @@ async function main() {
             default:
               throw new Error(`Unknown tool: ${request.params.name}`);
           }
-        } catch (error) {
+        } catch (error) { 
           if (error instanceof z.ZodError) {
             throw new Error(`Invalid input: ${JSON.stringify(error.errors)}`);
           }
 
-          throw error;
+          throw error; 
         }
+        return {content:[]}
     });
 
-    console.log('WoWok MCP server started.')   
+    //console.log(JSON.stringify('WoWok MCP server started.'))  
     await server.connect(transport);
 
     // Cleanup on exit
@@ -680,12 +664,12 @@ async function main() {
 }
 
 async function cleanup() {
-    console.log('WoWok MCP server closed.')  
+   // console.log({content:'WoWok MCP server closed.'})  
 }
 
 main().catch((error) => {
-    console.error("Server error:", error);
-    console.log('WoWok MCP server exited.') 
+    //console.log("Server error:", error);
+    //console.log('WoWok MCP server exited.') 
     process.exit(1);
 });
 

@@ -2,7 +2,7 @@
 import { z } from "zod";
 
 export const QueryObjectsSchema = z.object({
-    objects: z.array(z.string()).describe("Wowok object address."),
+    objects: z.array(z.string()).describe("Wowok object addresses."),
     showType: z.boolean().optional().describe("Whether to show the type of the object."),
     showContent: z.boolean().optional().describe("Whether to show the content of the object."),
     showOwner: z.boolean().optional().describe("Whether to show the owner of the object."),
@@ -41,7 +41,7 @@ export const EventCursorSchema = z.object({
 }).describe('Event retrieval cursor');
 
 export const QueryEventSchema = z.object({
-    type: z.enum(['OnNewArb', 'OnPresentService', 'OnNewProgress', 'OnNewOrder']).describe("Type of Events."),
+    type: z.enum(['OnNewArb', 'OnPresentService', 'OnNewProgress', 'OnNewOrder']).describe("Type of Events: OnNewArb, OnPresentService, OnNewProgress, OnNewOrder"),
     cursor: EventCursorSchema.optional().nullable().describe('Paging cursor.'),
     limit: z.number().optional().nullable().describe('Mmaximum number of items per page, default to 50 if not specified.'),
     order: z.enum(['ascending', 'descending']).optional().nullable().describe('Query result ordering, default to "ascending order", oldest record first.')

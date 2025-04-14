@@ -1,5 +1,5 @@
 # mcp_server
-MCP Server for WoWok:  ‌Maximization of utility and optimization of talent.
+MCP Server for WoWok:  Unlock Co-Creation, Maximize Self-Expression.
 
 Github: [https://github.com/wowok-ai/wowok](https://github.com/wowok-ai/wowok)   
 Wowok Agent for AI: [https://github.com/wowok-ai/wowok_agent](https://github.com/wowok-ai/wowok_agent)   
@@ -64,7 +64,7 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
       - `address` (string, required): The address has voted.  
 
 - **query demand object**    
-  - query service recommendation information by anyone in the Demand object.  
+  - query service recommendation information in the Demand object.  
   - Input: 
       - `object` (string, required): The address of the Demand object.
       - `address` (string, required): The address of the Service object recommended by anyone.   
@@ -154,8 +154,61 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
       - `objects` (string[], required): The address of the wowok objects(Machine,  Service, Demand, Arbitration, Treasury, Repository).
       - `new_permission` (string): The address of the Permission object that Replaces the original Permission object.
 
-## Setup
+## Resources
+- **query objects**
+  query wowok objects 
+  wowok://objects/{?objects*, showType, showContent, showOwner, no_cache}
+- **query permissions**
+  query permissions of an address from the wowok Permission object
+  wowok://permissions/{?permission_object,address}
+- **query personal infomation**
+  query personal information for an address
+  wowok://personal/{?address, no_cache}
+- **query table items**
+  query records of table data owned by the wowok object 
+  wowok://table_items/{?parent, cursor, limit}
+- **query arb voting**
+  query voting infomation for an address in the Arb object
+  wowok://table_item/arb/{?object, address}
+- **query machine node**
+  query node infomation in the Machine object.
+  wowok://table_item/machine/{?object, node}
+- **query demand service**
+  query service recommendation information in the Demand object.
+  wowok://table_item/demand/{?object, address}
+- **query personal mark**
+  query name and tags for an address in the PersonalMark object.
+  wowok://table_item/personalmark/{?object, address}
+- **query permissions for an address**
+  query permissions for an address in the Permission object.
+  wowok://table_item/permission/{?object, address}
+- **query repository data**
+  query node infomation in the Machine object.
+  wowok://table_item/repository/{?object, address, name}
+- **query progress sessions history**
+  query historical sessions data in the Progress object.
+  wowok://table_item/progress/{?object, index}
+- **query treasury flows history**
+  query historical flows data in the Treasury object.
+  wowok://table_item/treasury/{?object, index}
+- **query service sales**
+  query the current information of the item for sale in the Service object.
+  wowok://table_item/service/{?object, name}
+- **query new arb events**
+  query node infomation in the Machine object.
+  wowok://table_item/repository/{?object, address, name}
+- **query present service events**
+  query 'OnPresentService' events
+  wowok://events/OnPresentService/{?cursor_eventSeq, cursor_txDigest, limit, order}
+- **query new progress events**
+  query 'OnNewProgress' events
+  wowok://events/OnNewProgress/{?cursor_eventSeq, cursor_txDigest, limit, order}
+- **query new order events**
+  query 'OnNewOrder' events
+  wowok://events/OnNewOrder/{?cursor_eventSeq, cursor_txDigest, limit, order}
 
+
+## Setup
 #### NPX
 ```json
 {
