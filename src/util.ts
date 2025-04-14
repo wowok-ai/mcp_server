@@ -16,13 +16,13 @@ export function parseUrlParams<T extends Record<string, any>>(
       } else if (value.includes(",")) {
         result[key] = value.split(",").map(item => decodeURIComponent(item));
       } else {
-        if (WOWOK.IsValidAddress(value)) {
+        if (WOWOK.IsValidAddress(value)) { //'0x...' address converts to string
           result[key] = decodeURIComponent(value);
         } else if (value === '' || value === null || value === undefined) {
           result[key] = "false";
         } else if (!isNaN(Number(value))) {
           result[key] = Number(value)
-        }else {
+        } else {
           result[key] = decodeURIComponent(value);
         }
       }

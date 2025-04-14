@@ -76,7 +76,7 @@ const server = new Server({
     },
 },);
 
-const RES: ResourceTemplate[] = [
+const RESOURCES: ResourceTemplate[] = [
     {
         uriTemplate: 'wowok://objects/{?objects*, showType, showContent, showOwner, no_cache}',
         name:ToolName.QUERY_OBJECTS,
@@ -187,6 +187,135 @@ const RES: ResourceTemplate[] = [
     },*/
 ];
 
+const TOOLS: Tool[] = [
+    {
+        name: ToolName.QUERY_OBJECTS,
+        description: "query wowok objects",
+        inputSchema: zodToJsonSchema(QueryObjectsSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_EVENTS,
+        description: "query wowok events",
+        inputSchema: zodToJsonSchema(QueryEventSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_PERMISSIONS,
+        description: "query permissions of an address from the wowok Permission object",
+        inputSchema: zodToJsonSchema(QueryPermissionSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_TABLE_ITEMS,
+        description: "query records of table data owned by the wowok object",
+        inputSchema: zodToJsonSchema(QueryTableItemsSchema)  as ToolInput,
+    },
+    /*{
+        name: ToolName.QUERY_TABLE_ITEM,
+        description: "query a record of table data owned by the wowok object",
+        inputSchema: zodToJsonSchema(QueryTableItemSchema)  as ToolInput,
+    },*/
+    {
+        name: ToolName.QUERY_PERSONAL,
+        description: "query personal information for an address",
+        inputSchema: zodToJsonSchema(QueryPersonalSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_ARB_VOTING,
+        description: "query voting infomation for an address in the Arb object.",
+        inputSchema: zodToJsonSchema(QueryArbVotingSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_DEMAND_SERVICE,
+        description: "query service recommendation information in the Demand object.",
+        inputSchema: zodToJsonSchema(QueryDemandServiceSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_MACHINE_NODE,
+        description: "query node infomation in the Machine object.",
+        inputSchema: zodToJsonSchema(QueryMachineNodeSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_MARK_TAGS,
+        description: "query name and tags for an address in the PersonalMark object",
+        inputSchema: zodToJsonSchema(QueryMarkTagSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_PERMISSION_ENTITY,
+        description: "query permissions for an address in the Permission object.",
+        inputSchema: zodToJsonSchema(QueryPermissionEntitySchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_REPOSITORY_DATA,
+        description: "query data in the Repository object.",
+        inputSchema: zodToJsonSchema(QueryRepositoryDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_PROGRESS_HISTORY,
+        description: "query historical sessions data in the Progress object.",
+        inputSchema: zodToJsonSchema(QueryProgressHistorySchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_TREASURY_HISTORY,
+        description: "query historical flows data in the Treasury object.",
+        inputSchema: zodToJsonSchema(QueryTreasuryHistorySchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_SERVICE_SALE,
+        description: "query the current information of the item for sale in the Service object.",
+        inputSchema: zodToJsonSchema(QueryServiceSaleSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_PERSONAL,
+        description: "operations on the wowok Personal object",
+        inputSchema: zodToJsonSchema(CallPersonalDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_PERMISSION,
+        description: "operations on the wowok Permission object",
+        inputSchema: zodToJsonSchema(CallPermissionDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_REPOSITORY,
+        description: "operations on the wowok Repository object",
+        inputSchema: zodToJsonSchema(CallRepositoryDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_MACHINE,
+        description: "operations on the wowok Machine object",
+        inputSchema: zodToJsonSchema(CallMachineDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_GUARD,
+        description: "operations on the wowok Guard object",
+        inputSchema: zodToJsonSchema(CallGuardDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_SERVICE,
+        description: "operations on the wowok Service object",
+        inputSchema: zodToJsonSchema(CallServiceDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_ARBITRATION,
+        description: "operations on the wowok Arbitration object",
+        inputSchema: zodToJsonSchema(CallArbitrationDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_TREASURY,
+        description: "operations on the wowok Treasury object",
+        inputSchema: zodToJsonSchema(CallTreasuryDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_DEMAND,
+        description: "operations on the wowok Demand object",
+        inputSchema: zodToJsonSchema(CallDemandDataSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.OP_REPLACE_PERMISSION_OBJECT,
+        inputSchema: zodToJsonSchema(CallObjectPermissionDataSchema)  as ToolInput,
+        description: 'Batch modify the Permission object of wowok objects.' + 
+            'Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.'
+    }, 
+]
+
 type EventParam = {
     cursor_eventSeq?: string | null;
     cursor_txDigest?: string | null;
@@ -197,7 +326,7 @@ type EventParam = {
 async function main() {
     const transport = new StdioServerTransport();
     server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
-        return {resourceTemplates:RES}
+        return {resourceTemplates:RESOURCES}
     });
 
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
@@ -207,22 +336,22 @@ async function main() {
             var query = parseUrlParams<ObjectsQuery>(uri);
             query.objects = query.objects.filter(v => WOWOK.IsValidAddress(v));
             const r = await query_objects(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_OBJECTS)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_OBJECTS)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://permissions/")) {
             const query = parseUrlParams<PermissionQuery>(uri);
             const r = await query_permission(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_PERMISSIONS)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_PERMISSIONS)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://personal/")) {
             const query = parseUrlParams<PersonalQuery>(uri);
             const r = await queryTableItem_Personal(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_PERSONAL)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_PERSONAL)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_items/")) {
             const query = parseUrlParams<TableQuery>(uri);
             const r = await query_table(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_TABLE_ITEMS)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_TABLE_ITEMS)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/arb/")) {
             const query = parseUrlParams<QueryArbVoting>(uri);
@@ -231,70 +360,70 @@ async function main() {
         } else if (uri.startsWith("wowok://table_item/demand/")) {
             const query = parseUrlParams<QueryDemandService>(uri);
             const r = await queryTableItem_DemandService(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_DEMAND_SERVICE)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_DEMAND_SERVICE)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/service/")) {
             const query = parseUrlParams<QueryServiceSale>(uri);
             const r = await queryTableItem_ServiceSale(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_SERVICE_SALE)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_SERVICE_SALE)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/machine/")) {
             const query = parseUrlParams<QueryMachineNode>(uri);
             const r = await queryTableItem_MachineNode(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_MACHINE_NODE)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_MACHINE_NODE)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/repository/")) {
             const query = parseUrlParams<QueryRepositoryData>(uri);
             const r = await queryTableItem_RepositoryData(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_REPOSITORY_DATA)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_REPOSITORY_DATA)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/permission/")) {
             const query = parseUrlParams<QueryPermissionEntity>(uri);
             const r = await queryTableItem_PermissionEntity(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_PERMISSION_ENTITY)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_PERMISSION_ENTITY)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/personalmark/")) {
             const query = parseUrlParams<QueryMarkTag>(uri);
             const r = await queryTableItem_MarkTag(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_MARK_TAGS)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_MARK_TAGS)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/treasury/")) {
             const query = parseUrlParams<QueryTreasuryHistory>(uri);
             const r = await queryTableItem_TreasuryHistory(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_TREASURY_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_TREASURY_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/progress/")) {
             const query = parseUrlParams<QueryProgressHistory>(uri);
             const r = await queryTableItem_ProgressHistory(query);
-            const content = Object.assign(RES.find(v=>v.name===ToolName.QUERY_PROGRESS_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_PROGRESS_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onnewarb/")) {
             const query = parseUrlParams<EventParam>(uri);
             const r = await query_events({type:'OnNewArb', 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            const content = Object.assign(RES.find(v=>v.name===EventName.new_arb)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===EventName.new_arb)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onpresentservice/")) {
             const query = parseUrlParams<EventParam>(uri);
             const r = await query_events({type:'OnPresentService', 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            const content = Object.assign(RES.find(v=>v.name===EventName.present_service)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===EventName.present_service)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onnewprogress/")) {
             const query = parseUrlParams<EventParam>(uri);
             const r = await query_events({type:'OnNewProgress', 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            const content = Object.assign(RES.find(v=>v.name===EventName.new_progress)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===EventName.new_progress)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onneworder/")) {
             const query = parseUrlParams<EventParam>(uri);
             const r = await query_events({type:'OnNewOrder', 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            const content = Object.assign(RES.find(v=>v.name===EventName.new_order)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES.find(v=>v.name===EventName.new_order)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } 
 
@@ -302,135 +431,7 @@ async function main() {
     });
 
     server.setRequestHandler(ListToolsRequestSchema, async () => {
-        const tools: Tool[] = [
-            {
-                name: ToolName.QUERY_OBJECTS,
-                description: "query wowok objects",
-                inputSchema: zodToJsonSchema(QueryObjectsSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_EVENTS,
-                description: "query wowok events",
-                inputSchema: zodToJsonSchema(QueryEventSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_PERMISSIONS,
-                description: "query permissions of an address from the wowok Permission object",
-                inputSchema: zodToJsonSchema(QueryPermissionSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_TABLE_ITEMS,
-                description: "query records of table data owned by the wowok object",
-                inputSchema: zodToJsonSchema(QueryTableItemsSchema)  as ToolInput,
-            },
-            /*{
-                name: ToolName.QUERY_TABLE_ITEM,
-                description: "query a record of table data owned by the wowok object",
-                inputSchema: zodToJsonSchema(QueryTableItemSchema)  as ToolInput,
-            },*/
-            {
-                name: ToolName.QUERY_PERSONAL,
-                description: "query personal information for an address",
-                inputSchema: zodToJsonSchema(QueryPersonalSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_ARB_VOTING,
-                description: "query voting infomation for an address in the Arb object.",
-                inputSchema: zodToJsonSchema(QueryArbVotingSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_DEMAND_SERVICE,
-                description: "query service recommendation information in the Demand object.",
-                inputSchema: zodToJsonSchema(QueryDemandServiceSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_MACHINE_NODE,
-                description: "query node infomation in the Machine object.",
-                inputSchema: zodToJsonSchema(QueryMachineNodeSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_MARK_TAGS,
-                description: "query name and tags for an address in the PersonalMark object",
-                inputSchema: zodToJsonSchema(QueryMarkTagSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_PERMISSION_ENTITY,
-                description: "query permissions for an address in the Permission object.",
-                inputSchema: zodToJsonSchema(QueryPermissionEntitySchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_REPOSITORY_DATA,
-                description: "query data in the Repository object.",
-                inputSchema: zodToJsonSchema(QueryRepositoryDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_PROGRESS_HISTORY,
-                description: "query historical sessions data in the Progress object.",
-                inputSchema: zodToJsonSchema(QueryProgressHistorySchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_TREASURY_HISTORY,
-                description: "query historical flows data in the Treasury object.",
-                inputSchema: zodToJsonSchema(QueryTreasuryHistorySchema)  as ToolInput,
-            },
-            {
-                name: ToolName.QUERY_SERVICE_SALE,
-                description: "query the current information of the item for sale in the Service object.",
-                inputSchema: zodToJsonSchema(QueryServiceSaleSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_PERSONAL,
-                description: "operations on the wowok Personal object",
-                inputSchema: zodToJsonSchema(CallPersonalDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_PERMISSION,
-                description: "operations on the wowok Permission object",
-                inputSchema: zodToJsonSchema(CallPermissionDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_REPOSITORY,
-                description: "operations on the wowok Repository object",
-                inputSchema: zodToJsonSchema(CallRepositoryDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_MACHINE,
-                description: "operations on the wowok Machine object",
-                inputSchema: zodToJsonSchema(CallMachineDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_GUARD,
-                description: "operations on the wowok Guard object",
-                inputSchema: zodToJsonSchema(CallGuardDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_SERVICE,
-                description: "operations on the wowok Service object",
-                inputSchema: zodToJsonSchema(CallServiceDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_ARBITRATION,
-                description: "operations on the wowok Arbitration object",
-                inputSchema: zodToJsonSchema(CallArbitrationDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_TREASURY,
-                description: "operations on the wowok Treasury object",
-                inputSchema: zodToJsonSchema(CallTreasuryDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_DEMAND,
-                description: "operations on the wowok Demand object",
-                inputSchema: zodToJsonSchema(CallDemandDataSchema)  as ToolInput,
-            },
-            {
-                name: ToolName.OP_REPLACE_PERMISSION_OBJECT,
-                inputSchema: zodToJsonSchema(CallObjectPermissionDataSchema)  as ToolInput,
-                description: 'Batch modify the Permission object of wowok objects.' + 
-                    'Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.'
-            }, 
-        ]
-        return {tools};
+        return {tools:TOOLS};
     });
 
     server.setRequestHandler(CallToolRequestSchema, async (request) => {

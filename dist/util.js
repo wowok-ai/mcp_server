@@ -15,7 +15,7 @@ export function parseUrlParams(url) {
             result[key] = value.split(",").map(item => decodeURIComponent(item));
         }
         else {
-            if (WOWOK.IsValidAddress(value)) {
+            if (WOWOK.IsValidAddress(value)) { //'0x...' address converts to string
                 result[key] = decodeURIComponent(value);
             }
             else if (value === '' || value === null || value === undefined) {
