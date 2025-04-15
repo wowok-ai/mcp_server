@@ -4,37 +4,37 @@ import { CallToolRequestSchema, ListResourceTemplatesRequestSchema, ListToolsReq
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { query_objects, WOWOK, query_events, query_permission, query_table, call_guard, call_demand, call_machine, call_service, call_treasury, queryTableItem_ServiceSale, queryTableItem_DemandService, call_arbitration, call_permission, call_personal, call_transfer_permission, call_repository, queryTableItem_ArbVoting, queryTableItem_MachineNode, queryTableItem_MarkTag, queryTableItem_PermissionEntity, queryTableItem_ProgressHistory, queryTableItem_TreasuryHistory, queryTableItem_RepositoryData, queryTableItem_Personal, } from 'wowok_agent';
-import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryTableItemSchema, QueryArbVotingSchema, QueryDemandServiceSchema, QueryMachineNodeSchema, QueryMarkTagSchema, QueryPermissionEntitySchema, QueryProgressHistorySchema, QueryTreasuryHistorySchema, QueryServiceSaleSchema, QueryRepositoryDataSchema, } from './query.js';
-import { CallArbitrationDataSchema, CallArbitrationSchema, CallDemandDataSchema, CallDemandSchema, CallGuardDataSchema, CallGuardSchema, CallMachineDataSchema, CallMachineSchema, CallObejctPermissionSchema, CallObjectPermissionDataSchema, CallPermissionDataSchema, CallPermissionSchema, CallPersonalDataSchema, CallPersonalSchema, CallRepositoryDataSchema, CallRepositorySchema, CallServiceDataSchema, CallServiceSchema, CallTreasuryDataSchema, CallTreasurySchema, } from "./call.js";
+import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryArbVotingSchema, QueryDemandServiceSchema, QueryMachineNodeSchema, QueryMarkTagSchema, QueryPermissionEntitySchema, QueryProgressHistorySchema, QueryTreasuryHistorySchema, QueryServiceSaleSchema, QueryRepositoryDataSchema, } from './query.js';
+import { CallArbitrationSchema, CallDemandSchema, CallGuardSchema, CallMachineSchema, CallObejctPermissionSchema, CallPermissionSchema, CallPersonalSchema, CallRepositorySchema, CallServiceSchema, CallTreasurySchema, } from "./call.js";
 import { parseUrlParams } from "./util.js";
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 export var ToolName;
 (function (ToolName) {
-    ToolName["QUERY_OBJECTS"] = "query objects";
-    ToolName["QUERY_EVENTS"] = "query events";
-    ToolName["QUERY_PERMISSIONS"] = "query permissions";
-    ToolName["QUERY_TABLE_ITEMS"] = "query table items";
-    ToolName["QUERY_TABLE_ITEM"] = "query a table item";
-    ToolName["QUERY_PERSONAL"] = "query presonal infomation";
-    ToolName["QUERY_ARB_VOTING"] = "query arb object";
-    ToolName["QUERY_DEMAND_SERVICE"] = "query demand object";
-    ToolName["QUERY_PERMISSION_ENTITY"] = "query permission object";
-    ToolName["QUERY_MACHINE_NODE"] = "query machine object";
-    ToolName["QUERY_SERVICE_SALE"] = "query service object";
-    ToolName["QUERY_PROGRESS_HISTORY"] = "query progress object";
-    ToolName["QUERY_TREASURY_HISTORY"] = "query treasury object";
-    ToolName["QUERY_REPOSITORY_DATA"] = "query repository object";
-    ToolName["QUERY_MARK_TAGS"] = "query personalmark object";
-    ToolName["OP_PERSONAL"] = "personal operations";
-    ToolName["OP_MACHINE"] = "machine operations";
-    ToolName["OP_SERVICE"] = "service operations";
-    ToolName["OP_PERMISSION"] = "permission operations";
-    ToolName["OP_TREASURY"] = "treasury operations";
-    ToolName["OP_ARBITRATION"] = "arbitration operations";
-    ToolName["OP_REPOSITORY"] = "repository operations";
-    ToolName["OP_GUARD"] = "guard operations";
-    ToolName["OP_DEMAND"] = "demand operations";
-    ToolName["OP_REPLACE_PERMISSION_OBJECT"] = "replace permission object";
+    ToolName["QUERY_OBJECTS"] = "objects";
+    ToolName["QUERY_EVENTS"] = "events";
+    ToolName["QUERY_PERMISSIONS"] = "permissions";
+    ToolName["QUERY_TABLE_ITEMS"] = "table_items";
+    //QUERY_TABLE_ITEM = 'table_item',
+    ToolName["QUERY_PERSONAL"] = "presonal_infomation";
+    ToolName["QUERY_ARB_VOTING"] = "arb_table_item";
+    ToolName["QUERY_DEMAND_SERVICE"] = "demand_table_item";
+    ToolName["QUERY_PERMISSION_ENTITY"] = "permission_table_item";
+    ToolName["QUERY_MACHINE_NODE"] = "machine_table_item";
+    ToolName["QUERY_SERVICE_SALE"] = "service_table_item";
+    ToolName["QUERY_PROGRESS_HISTORY"] = "progress_table_item";
+    ToolName["QUERY_TREASURY_HISTORY"] = "treasury_table_item";
+    ToolName["QUERY_REPOSITORY_DATA"] = "repository_table_item";
+    ToolName["QUERY_MARK_TAGS"] = "personal_resource_table_item";
+    ToolName["OP_PERSONAL"] = "personal_operations";
+    ToolName["OP_MACHINE"] = "machine_operations";
+    ToolName["OP_SERVICE"] = "service_operations";
+    ToolName["OP_PERMISSION"] = "permission_operations";
+    ToolName["OP_TREASURY"] = "treasury_operations";
+    ToolName["OP_ARBITRATION"] = "arbitration_operations";
+    ToolName["OP_REPOSITORY"] = "repository_operations";
+    ToolName["OP_GUARD"] = "guard_operations";
+    ToolName["OP_DEMAND"] = "demand_operations";
+    ToolName["OP_REPLACE_PERMISSION_OBJECT"] = "replace_permission_object";
 })(ToolName || (ToolName = {}));
 export var EventName;
 (function (EventName) {
@@ -245,51 +245,51 @@ const TOOLS = [
     {
         name: ToolName.OP_PERSONAL,
         description: "operations on the wowok Personal object",
-        inputSchema: zodToJsonSchema(CallPersonalDataSchema),
+        inputSchema: zodToJsonSchema(CallPersonalSchema),
     },
     {
         name: ToolName.OP_PERMISSION,
         description: "operations on the wowok Permission object",
-        inputSchema: zodToJsonSchema(CallPermissionDataSchema),
+        inputSchema: zodToJsonSchema(CallPermissionSchema),
     },
     {
         name: ToolName.OP_REPOSITORY,
         description: "operations on the wowok Repository object",
-        inputSchema: zodToJsonSchema(CallRepositoryDataSchema),
+        inputSchema: zodToJsonSchema(CallRepositorySchema),
     },
     {
         name: ToolName.OP_MACHINE,
         description: "operations on the wowok Machine object",
-        inputSchema: zodToJsonSchema(CallMachineDataSchema),
+        inputSchema: zodToJsonSchema(CallMachineSchema),
     },
     {
         name: ToolName.OP_GUARD,
         description: "operations on the wowok Guard object",
-        inputSchema: zodToJsonSchema(CallGuardDataSchema),
+        inputSchema: zodToJsonSchema(CallGuardSchema),
     },
     {
         name: ToolName.OP_SERVICE,
         description: "operations on the wowok Service object",
-        inputSchema: zodToJsonSchema(CallServiceDataSchema),
+        inputSchema: zodToJsonSchema(CallServiceSchema),
     },
     {
         name: ToolName.OP_ARBITRATION,
         description: "operations on the wowok Arbitration object",
-        inputSchema: zodToJsonSchema(CallArbitrationDataSchema),
+        inputSchema: zodToJsonSchema(CallArbitrationSchema),
     },
     {
         name: ToolName.OP_TREASURY,
         description: "operations on the wowok Treasury object",
-        inputSchema: zodToJsonSchema(CallTreasuryDataSchema),
+        inputSchema: zodToJsonSchema(CallTreasurySchema),
     },
     {
         name: ToolName.OP_DEMAND,
         description: "operations on the wowok Demand object",
-        inputSchema: zodToJsonSchema(CallDemandDataSchema),
+        inputSchema: zodToJsonSchema(CallDemandSchema),
     },
     {
         name: ToolName.OP_REPLACE_PERMISSION_OBJECT,
-        inputSchema: zodToJsonSchema(CallObjectPermissionDataSchema),
+        inputSchema: zodToJsonSchema(CallObejctPermissionSchema),
         description: 'Batch modify the Permission object of wowok objects.' +
             'Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.'
     },
@@ -457,13 +457,13 @@ async function main() {
                         content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                     };
                 }
-                case ToolName.QUERY_TABLE_ITEM: {
+                /*case ToolName.QUERY_TABLE_ITEM: {
                     const args = QueryTableItemSchema.parse(request.params.arguments);
                     const r = await query_table(args);
                     return {
                         content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                     };
-                }
+                }*/
                 case ToolName.QUERY_ARB_VOTING: {
                     const args = QueryArbVotingSchema.parse(request.params.arguments);
                     const r = await queryTableItem_ArbVoting(args);

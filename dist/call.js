@@ -11,8 +11,8 @@ const CallOldObjectSchema = z.object({
     address: z.string().nonempty().describe('The address of the object.')
 });
 const NamedObjectSchema = z.object({
-    name: z.string().optional().describe('The name of the new object.'),
-    tags: z.array(z.string().nonempty()).optional().describe('A list of tags for the new object.')
+    name: z.string().describe('The name of the new object.'),
+    tags: z.array(z.string().nonempty()).describe('A list of tags for the new object.')
 });
 const NewObjectSchema = z.object({
     namedNew: NamedObjectSchema.optional().describe('Newly named wowok object.'),
@@ -49,7 +49,7 @@ const OrderCryptoInfoSchema = z.object({
     customer_pubkey: z.string().nonempty().describe('The public key for encrypting the order information'),
     customer_info_crypt: z.string().describe('Encrypted order information'),
 }).optional().describe('The order sensitive information Encrypted data');
-const GuardNodeSchema = z.union([
+const GuardNodeSchema = z.lazy(() => z.union([
     z.object({
         identifier: GuardIndentifierSchema.describe('Data from the Guard table corresponding to the identifier.')
     }).describe('Data from the Guard table corresponding to the identifier.'),
@@ -58,7 +58,7 @@ const GuardNodeSchema = z.union([
         object: z.union([z.string().describe('The address of the object to query.'),
             GuardIndentifierSchema.describe('The address of the object to query from the Guard table corresponding to the identifier.')
         ]).describe('The object to query'),
-        parameters: z.lazy(() => z.array(GuardNodeSchema)).describe('All the child nodes.' +
+        parameters: z.array(GuardNodeSchema).describe('All the child nodes.' +
             'The data return type of the query child node must be consistent with the parameters field of GuardQuery structure.')
     }).describe('Data from querying the wowok object.'),
     z.object({
@@ -73,7 +73,7 @@ const GuardNodeSchema = z.union([
             z.literal(WOWOK.OperatorType.TYPE_LOGIC_AND).describe(`${WOWOK.LogicsInfo.find(v => v[0] === WOWOK.OperatorType.TYPE_LOGIC_AND)[1]}. ${WOWOK.LogicsInfo.find(v => v[0] === WOWOK.OperatorType.TYPE_LOGIC_AND)[2]}.`),
             z.literal(WOWOK.OperatorType.TYPE_LOGIC_OR).describe(`${WOWOK.LogicsInfo.find(v => v[0] === WOWOK.OperatorType.TYPE_LOGIC_OR)[1]}. ${WOWOK.LogicsInfo.find(v => v[0] === WOWOK.OperatorType.TYPE_LOGIC_OR)[2]}.`),
         ]).describe('Logical judgment of all child nodes.'),
-        parameters: z.lazy(() => z.array(GuardNodeSchema)).describe('All the child nodes.' +
+        parameters: z.array(GuardNodeSchema).describe('All the child nodes.' +
             `The data return type of the child node should be ${WOWOK.ValueType.TYPE_U8} or ${WOWOK.ValueType.TYPE_U64} or ${WOWOK.ValueType.TYPE_U128} or ${WOWOK.ValueType.TYPE_U256}, 
             if logic is "Unsigned Integer >", "Unsigned Integer >=", "Unsigned Integer <", "Unsigned Integer <=", "Unsigned Integer =" one of these.
             The data return type of the child node should be ${WOWOK.ValueType.TYPE_BOOL}, if logic is "And", "Or", "Not" one of these.
@@ -88,7 +88,7 @@ const GuardNodeSchema = z.union([
             z.literal(WOWOK.OperatorType.TYPE_NUMBER_MULTIPLY).describe(`Mathematical operation:*`),
             z.literal(WOWOK.OperatorType.TYPE_NUMBER_SUBTRACT).describe(`Mathematical operation:-`),
         ]).describe('Perform mathematical operations or type conversions on numeric values.'),
-        parameters: z.lazy(() => z.array(GuardNodeSchema)).describe('All the child nodes.' +
+        parameters: z.array(GuardNodeSchema).describe('All the child nodes.' +
             `The data return type of the child node should be ${WOWOK.ValueType.TYPE_U8} or ${WOWOK.ValueType.TYPE_U64} or 
             ${WOWOK.ValueType.TYPE_U128} or ${WOWOK.ValueType.TYPE_U256}.
             `)
@@ -103,7 +103,7 @@ const GuardNodeSchema = z.union([
             z.literal(WOWOK.ContextType.TYPE_GUARD).describe(`The Guard address to which the condition belongs is currently being verified.Type is ${WOWOK.ValueType.TYPE_ADDRESS} `),
         ]).describe('Data from transaction context.')
     })
-]).describe('Generates data for a Guard node');
+]).describe('Generates data for a Guard node'));
 const MachineNode_ForwardSchema = z.object({
     name: z.string().nonempty().describe('Operation name. Uniquely identifies an operation between the same two nodes.'),
     namedOperator: z.string().nonempty().optional().describe('The namespace with the operation permission. ' +
@@ -769,7 +769,7 @@ export const CallServiceDataSchema = z.object({
     }).optional().describe('Clone a new Service object. Inheriting the original Settings (but not published yet), and could change the type of payment token.'),
 }).describe('Data definition that operates on the Service object.');
 export const CallPersonalDataSchema = z.object({
-    object: CallObjectSchema.optional().describe('Modify the existing Personal object or build a new one.'),
+    mark_object: CallObjectSchema.optional().describe('Modify the existing PersonalMark object or build a new one.'),
     information: z.object({
         name: z.string().describe('The name of the personal.'),
         description: z.string().optional().describe('Personal introduction.'),
@@ -784,14 +784,14 @@ export const CallPersonalDataSchema = z.object({
             data: z.array(z.object({
                 address: z.string().nonempty().describe('The address'),
                 name: z.string().optional().describe('The name for the address.'),
-                tags: z.array(z.string().nonempty().describe('Tags for the address.'))
+                tags: z.array(z.string().nonempty().describe('Tags for the address.')).optional()
             }).describe('Name and Tag an address.'))
         }).describe('Add or set a name and tags for the addresses'),
         z.object({
             op: z.literal('remove'),
             data: z.array(z.object({
                 address: z.string().nonempty().describe('The address'),
-                tags: z.array(z.string().nonempty().describe('Tags for the address.'))
+                tags: z.array(z.string().nonempty().describe('Tags for the address.')).optional()
             }))
         }).describe('Remove tags for the addresses'),
         z.object({
@@ -870,7 +870,6 @@ export const CallArbitrationSchema = z.object({
 export const CallPersonalSchema = z.object({
     data: CallPersonalDataSchema,
     account: z.string().default('').optional().describe('The account name that initiated the operation.'),
-    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });
 export const CallObejctPermissionSchema = z.object({
     data: CallObjectPermissionDataSchema,
