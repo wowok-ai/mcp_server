@@ -31,7 +31,7 @@ export enum ToolName {
     QUERY_PERMISSIONS = 'permissions',
     QUERY_TABLE_ITEMS = 'table_items', 
     //QUERY_TABLE_ITEM = 'table_item',
-    QUERY_PERSONAL = 'presonal_infomation',
+    QUERY_PERSONAL = 'presonal_information',
     QUERY_ARB_VOTING = 'arb_table_item',
     QUERY_DEMAND_SERVICE = 'demand_table_item',
     QUERY_PERMISSION_ENTITY = 'permission_table_item',
@@ -40,7 +40,7 @@ export enum ToolName {
     QUERY_PROGRESS_HISTORY = 'progress_table_item',
     QUERY_TREASURY_HISTORY = 'treasury_table_item',
     QUERY_REPOSITORY_DATA = 'repository_table_item',
-    QUERY_MARK_TAGS = 'personal_resource_table_item',
+    QUERY_MARK_TAGS = 'personalmark_table_item',
     OP_PERSONAL = 'personal_operations',
     OP_MACHINE = 'machine_operations',
     OP_SERVICE = 'service_operations',
@@ -54,10 +54,10 @@ export enum ToolName {
 }
 
 export enum EventName {
-    new_arb = 'onNewArb events',
-    new_progress = 'onNewProgress events',
-    new_order = 'onNewOrder events',
-    present_service = 'OnPresentService events'
+    new_arb = 'new_arb_events',
+    new_progress = 'new_progress_events',
+    new_order = 'new_order_events',
+    present_service = 'present_service_events'
 }
 
 WOWOK.Protocol.Instance().use_network(WOWOK.ENTRYPOINT.testnet);
@@ -96,13 +96,13 @@ const RESOURCES: ResourceTemplate[] = [
     {
         uriTemplate: 'wowok://table_items/{?parent, cursor, limit}',
         name: ToolName.QUERY_TABLE_ITEMS,
-        description: "query records of table data owned by the wowok object",
+        description: "query records of table data owned by the wowok object (Demand, Repository, Progress, Service, Treasury, Arb, Permission, Machine, PersonalMark)",
         mimeType:'text/plain'
     },
     {
         uriTemplate: 'wowok://table_item/arb/{?object, address}',
         name: ToolName.QUERY_ARB_VOTING,
-        description: "query voting infomation for an address in the Arb object.",
+        description: "query voting information for an address in the Arb object.",
         mimeType:'text/plain',
     },
     {
@@ -114,7 +114,7 @@ const RESOURCES: ResourceTemplate[] = [
     {
         uriTemplate: 'wowok://table_item/machine/{?object, node}',
         name: ToolName.QUERY_MACHINE_NODE,
-        description: "query node infomation in the Machine object.",
+        description: "query node information in the Machine object.",
         mimeType:'text/plain',
     },
     {
@@ -218,7 +218,7 @@ const TOOLS: Tool[] = [
     },
     {
         name: ToolName.QUERY_ARB_VOTING,
-        description: "query voting infomation for an address in the Arb object.",
+        description: "query voting information for an address in the Arb object.",
         inputSchema: zodToJsonSchema(QueryArbVotingSchema)  as ToolInput,
     },
     {
@@ -228,7 +228,7 @@ const TOOLS: Tool[] = [
     },
     {
         name: ToolName.QUERY_MACHINE_NODE,
-        description: "query node infomation in the Machine object.",
+        description: "query node information in the Machine object.",
         inputSchema: zodToJsonSchema(QueryMachineNodeSchema)  as ToolInput,
     },
     {

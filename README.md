@@ -1,5 +1,5 @@
-# mcp_server
-MCP Server for WoWok:  Unlock Co-Creation, Maximize Self-Expression.
+# wowok_mcp (MCP Server for WoWok)
+Unlock Co-Creation: Right Talent, Perfect Purpose.
 
 Github: [https://github.com/wowok-ai/wowok](https://github.com/wowok-ai/wowok)   
 Wowok Agent for AI: [https://github.com/wowok-ai/wowok_agent](https://github.com/wowok-ai/wowok_agent)   
@@ -9,222 +9,214 @@ Docs: [https://github.com/wowok-ai/wowok/wiki](https://github.com/wowok-ai/wowok
 X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
 
 ## Tools
-- **query objects**
-  - query wowok objects
-  - Input: array of objects
-    - Each object contains:
-      - `objects` (string[], required): Wowok object addresses to query.
-      - `showType` (boolean): Whether to show the type of the objects.
-      - `showContent` (boolean): Whether to show the content of the objects.
-      - `showOwner` (boolean): Whether to show the owner of the objects.
-      - `no_cache` (boolean): Whether to not use local cache data.
+- **objects**
+  Query wowok objects
+  Input: array of objects, Each object contains:
+    - `objects` (string[], required): Wowok object addresses to query.
+    - `showType` (boolean): Whether to show the type of the objects.
+    - `showContent` (boolean): Whether to show the content of the objects.
+    - `showOwner` (boolean): Whether to show the owner of the objects.
+    - `no_cache` (boolean): Whether to not use local cache data.
 
-- **query events**
-  - query wowok events
-  - Input: 
-      - `type` (string, required): 'OnNewArb' | 'OnPresentService'| 'OnNewProgress' | 'OnNewOrder'
-      - `cursor` (object): Paging cursor that can be returned from the query result
-        - `eventSeq`: (string): Event sequence.
-        - `txDigest`: (string): Transaction Digest.
-      - `limit` (number): Mmaximum number of items per page, default to 50 if not specified.
-      - `order` (string): 'ascending'(default), 'descending'
+- **events**
+  Query wowok events
+  Input: 
+    - `type` (string, required): 'OnNewArb' | 'OnPresentService'| 'OnNewProgress' | 'OnNewOrder'
+    - `cursor` (object): Paging cursor that can be returned from the query result
+      - `eventSeq`: (string): Event sequence.
+      - `txDigest`: (string): Transaction Digest.
+    - `limit` (number): Maximum number of items per page, default to 50 if not specified.
+    - `order` (string): 'ascending'(default), 'descending'
 
-- **query permissions**
-  - query permissions of an address from the wowok Permission object
-  - Input: 
-      - `permission_object` (string, required): Wowok Permission object address.
-      - `address` (string): Address you want to query permissions.
+- **permissions** 
+  Query permissions of an address from the wowok Permission object
+  Input: 
+    - `permission_object` (string, required): Wowok Permission object address.
+    - `address` (string): Address you want to query permissions.
 
 
-- **query table items**
-  - query records of table data owned by the wowok object(Demand, Repository, Progress, Service, Treasury, Arb, Permission, Machine, PersonalMark)
-  - Input: 
-      - `parent` (string, required): Wowok object address that owns the table.
-      - `cursor` (string): An optional paging cursor. 
-      - `limit` (number): Maximum item returned per page, default to 50 if not specified.
+- **table_items**
+  Query records of table data owned by the wowok object (Demand, Repository, Progress, Service, Treasury, Arb, Permission, Machine, PersonalMark)
+  Input: 
+    - `parent` (string, required): Wowok object address that owns the table.
+    - `cursor` (string): An optional paging cursor. 
+    - `limit` (number): Maximum item returned per page, default to 50 if not specified.
 
-- **query a table item**  
-  - query a record of table data owned by the wowok object(Demand, Repository, Progress, Service, Treasury, Arb, Permission, Machine, PersonalMark)  
-  - Input:  
-      - `parent` (string, required): Wowok object address that owns the table. 
-      - `key` (object, required): The query key 
-        - `type` (string): Type of the value. 
-        - `value` (unknown): Value.  
+- **presonal_information**
+  Query personal information for an address   
+  Input:
+    - `address` (string, required): Personal address to query.  
+    - `no_cache` (boolean): Whether to not use local cache data.  
 
-- **query presonal infomation**  
-  - query personal information for an address   
-  - Input:   
-      - `address` (string, required): Personal address to query.   
-      - `no_cache` (boolean): Whether to not use local cache data.  
+- **arb_table_item**
+  Query voting information for an address in the Arb object  
+  Input: 
+    - `object` (string, required): The address of the Arb object.  
+    - `address` (string, required): The address has voted.  
 
-- **query arb object** 
-  - query voting infomation for an address in the Arb object  
-  - Input:  
-      - `object` (string, required): The address of the Arb object.   
-      - `address` (string, required): The address has voted.  
+- **demand_table_item**
+  Query service recommendation information in the Demand object.  
+  Input: 
+    - `object` (string, required): The address of the Demand object.
+    - `address` (string, required): The address of the Service object recommended by anyone.   
 
-- **query demand object**    
-  - query service recommendation information in the Demand object.  
-  - Input: 
-      - `object` (string, required): The address of the Demand object.
-      - `address` (string, required): The address of the Service object recommended by anyone.   
+- **permission_table_item**
+  Query permissions for an address in the Permission object.  
+  Input: 
+    - `object` (string, required): The address of the Permission object.  
+    - `address` (string, required): The address to query permissions.  
 
-- **query permission object**   
-  - query permissions for an address in the Permission object.  
-  - Input: 
-      - `object` (string, required): The address of the Permission object.  
-      - `address` (string, required): The address to query permissions.  
+- **personalmark_table_item**
+  Query name and tags for an address in the PersonalMark object
+  Input: 
+    - `object` (string, required): The address of the PersonalMark object that privately owned by a user.
+    - `address` (string, required): The address to query the name and tags.
 
-- **query personalmark object**
-  - query name and tags for an address in the PersonalMark object
-  - Input: 
-      - `object` (string, required): The address of the PersonalMark object that privately owned by a user.
-      - `address` (string, required): The address to query the name and tags.
+- **treasury_table_item**
+  Query historical flows data in the Treasury object.  
+  Input: 
+    - `object` (string, required): The address of the Treasury object.
+    - `number` (string, required): Historical data index. Start at 0 and add 1 for each new record.
 
-- **query treasury object**
-  - query historical flows data in the Treasury object.  
-  - Input: 
-      - `object` (string, required): The address of the Treasury object.
-      - `number` (string, required): Historical data index. Start at 0 and add 1 for each new record.
-- **query progress object**
-  - query historical sessions data in the Progress object.
-  - Input: 
-      - `object` (string, required): The address of the Progress object.
-      - `number` (string, required): Historical data index. Start at 0 and add 1 for each new record.
+- **qprogress_table_item**
+  Query historical sessions data in the Progress object.
+  Input: 
+    - `object` (string, required): The address of the Progress object.
+    - `number` (string, required): Historical data index. Start at 0 and add 1 for each new record.
 
-- **query machine object**
-  - query node infomation in the Machine object.
-  - Input: 
-      - `object` (string, required): The address of the Machine object.
-      - `name` (string, required): The node name.
+- **machine_table_item**
+  Query node information in the Machine object.
+  Input: 
+    - `object` (string, required): The address of the Machine object.
+    - `name` (string, required): The node name.
 
-- **query service object**
-  - query the current information of the item for sale in the Service object.
-  - Input: 
-      - `object` (string, required): The address of the Service object.
-      - `name` (string, required): The sales item name.
-
-- **query repository object**
-  - query data in the Repository object.
-  - Input: 
-      - `object` (string, required): The address of the Repository object.
-      - `address` (string | number, required): The address(or number converted to address, such as time) that own the data.
-      - `name` (string, required): Data field name.
+- **service_table_item**
+  Query the current information of the item for sale in the Service object.
+  Input: 
+    - `object` (string, required): The address of the Service object.
+    - `name` (string, required): The sales item name.
+  
+- **repository_table_item**
+  Query data in the Repository object.
+  Input: 
+    - `object` (string, required): The address of the Repository object.
+    - `address` (string | number, required): The address(or number converted to address, such as time) that owns the data.
+    - `name` (string, required): Data field name.
       
-- **personal operations**
-  - operations on the wowok Personal object
-  - Input: CallPersonalDataSchema
+- **personal_operations**
+  Operations on the wowok Personal object  
+  Input: *CallPersonalDataSchema*
 
-- **machine operations**
-  - operations on the wowok Machine object
-  - Input: CallMachineDataSchema
+- **machine_operations**
+  Operations on the wowok Machine object
+  Input: *CallMachineDataSchema*
 
-- **service operations**
-  - operations on the wowok Service object
-  - Input: CallServiceDataSchema
+- **service_operations**
+  Operations on the wowok Service object
+  Input: *CallServiceDataSchema*
 
-- **permission operations**
-  - operations on the wowok Permission object
-  - Input: CallPermissionDataSchema
+- **permission_operations**
+  Operations on the wowok Permission object
+  Input: *CallPermissionDataSchema*
 
-- **treasury operations**
-  - operations on the wowok Treasury object
-  - Input: CallTreasuryDataSchema
+- **treasury_operations**
+  Operations on the wowok Treasury object
+  Input: *CallTreasuryDataSchema*
 
-- **arbitration operations**
-  - operations on the wowok Arbitration object
-  - Input: CallArbitrationDataSchema
+- **arbitration_operations**
+  Operations on the wowok Arbitration object
+  Input: *CallArbitrationDataSchema*
 
-- **repository operations**
-  - operations on the wowok Repository object
-  - Input: CallRepositoryDataSchema
+- **repository_operations**
+  Operations on the wowok Repository object
+  Input: *CallRepositoryDataSchema*
 
-- **guard operations**
-  - operations on the wowok Guard object
-  - Input: CallGuardDataSchema
+- **guard_operations**
+  Operations on the wowok Guard object
+  Input: *CallGuardDataSchema*
 
-- **demand operations**
-  - operations on the wowok Demand object
-  - Input: CallDemandDataSchema
+- **demand_operations**
+  Operations on the wowok Demand object
+  Input: *CallDemandDataSchema*
 
-- **replace permission object**
-  - Batch modify the Permission object of wowok objects.
-  - Input: CallObjectPermissionDataSchema
+- **replace_permission_object**
+  Batch modifies the Permission object of wowok objects.
+  Input: *CallObjectPermissionDataSchema*
       - `objects` (string[], required): The address of the wowok objects(Machine,  Service, Demand, Arbitration, Treasury, Repository).
       - `new_permission` (string): The address of the Permission object that Replaces the original Permission object.
 
 ## Resources
-- **query objects**
-  query wowok objects 
+- **objects**
+  Query wowok objects
   wowok://objects/{?objects*, showType, showContent, showOwner, no_cache}
-  
-- **query permissions**
-  query permissions of an address from the wowok Permission object
+
+- **permissions**
+  Query permissions of an address from the wowok Permission object
   wowok://permissions/{?permission_object,address}
 
-- **query personal infomation**
-  query personal information for an address
+- **personal_information**
+  Query personal information for an address
   wowok://personal/{?address, no_cache}
 
-- **query table items**
-  query records of table data owned by the wowok object 
+- **table_items**
+  Query records of table data owned by the wowok object 
   wowok://table_items/{?parent, cursor, limit}
 
-- **query arb voting**
-  query voting infomation for an address in the Arb object
+- **arb_table_item**
+  Query voting information for an address in the Arb object
   wowok://table_item/arb/{?object, address}
 
-- **query machine node**
-  query node infomation in the Machine object.
+- **machine_table_item**
+  Query node information in the Machine object.
   wowok://table_item/machine/{?object, node}
 
-- **query demand service that presented**
-  query service recommendation information in the Demand object.
+- **demand_table_item**
+  Query service recommendation information in the Demand object.
   wowok://table_item/demand/{?object, address}
 
-- **query personal mark**
-  query name and tags for an address in the PersonalMark object.
+- **personalmark_table_item**
+  Query name and tags for an address in the PersonalMark object.
   wowok://table_item/personalmark/{?object, address}
 
-- **query permissions for an address**
-  query permissions for an address in the Permission object.
+- **permission_table_item**
+  Query permissions for an address in the Permission object.
   wowok://table_item/permission/{?object, address}
 
-- **query repository data**
-  query node infomation in the Machine object.
+- **repository_table_item**
+  Query node information in the Machine object.
   wowok://table_item/repository/{?object, address, name}
 
-- **query progress sessions history**
-  query historical sessions data in the Progress object.
+- **progress_table_item**
+  Query historical sessions data in the Progress object.
   wowok://table_item/progress/{?object, index}
 
-- **query treasury flows history**
-  query historical flows data in the Treasury object.
+- **treasury_table_item**
+  Query historical flows data in the Treasury object.
   wowok://table_item/treasury/{?object, index}
 
-- **query service sales**
-  query the current information of the item for sale in the Service object.
+- **service_table_item**
+  Query the current information of the item for sale in the Service object.
   wowok://table_item/service/{?object, name}
 
-- **query new arb events**
-  query node infomation in the Machine object.
+- **new_arb_events** 
+  Query node information in the Machine object.
   wowok://table_item/repository/{?object, address, name}
 
-- **query present service events**
-  query 'OnPresentService' events
+- **present_service_events**
+  Query 'OnPresentService' events
   wowok://events/OnPresentService/{?cursor_eventSeq, cursor_txDigest, limit, order}
 
-- **query new progress events**
-  query 'OnNewProgress' events
+- **new_progress_events**
+  Query 'OnNewProgress' events
   wowok://events/OnNewProgress/{?cursor_eventSeq, cursor_txDigest, limit, order}
 
-- **query new order events**
-  query 'OnNewOrder' events
+- **new_order_events**
+  Query 'OnNewOrder' events
   wowok://events/OnNewOrder/{?cursor_eventSeq, cursor_txDigest, limit, order}
 
 
-## Setup
-#### NPX
+## Setup   
+#### NPX   
 ```json
 {
   "mcpServers": {
