@@ -3,9 +3,6 @@ import { z } from "zod";
 
 export const QueryObjectsSchema = z.object({
     objects: z.array(z.string()).describe("Wowok object addresses."),
-    showType: z.boolean().optional().describe("Whether to show the type of the object."),
-    showContent: z.boolean().optional().describe("Whether to show the content of the object."),
-    showOwner: z.boolean().optional().describe("Whether to show the owner of the object."),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
 }).describe('Query the data of a wowok object.');
 

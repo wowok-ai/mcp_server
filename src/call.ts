@@ -1,6 +1,6 @@
 
 import { z } from "zod";
-import { CallObjectPermission, WOWOK } from "wowok_agent";
+import { WOWOK } from "wowok_agent";
 
 const PermissioIndexArray = WOWOK.PermissionInfo.filter(i => i.index !== WOWOK.PermissionIndex.user_defined_start)
     .map(v => z.literal(v.index).describe(`module:${v.module}.name:${v.name}.description:${v.description}`));
@@ -19,7 +19,9 @@ const CallOldObjectSchema = z.object({
 
 const NamedObjectSchema = z.object({
     name: z.string().describe('The name of the new object.'),
-    tags: z.array(z.string().nonempty()).describe('A list of tags for the new object.')
+    tags: z.array(z.string().nonempty()).describe('A list of tags for the new object.'),
+    useAddressIfNameExist: z.boolean().optional().describe('While a naming conflict occurs, prioritize the address as the identifier(If true); otherwise, use this name and change the original name to its address.'),
+    onChain: z.boolean().optional().describe('If true, the name and tags will be recorded on-chain. Regardless, a local copy is always stored for future lookup and reference the object by name.'),
 });
 
 const NewObjectSchema = z.object({
