@@ -20,6 +20,7 @@ export const QueryTableItemsSchema = z.object({
         "If provided, the query will start from the next item after the specified cursor. " +
         "Default to start from the first item if not specified."),
     limit: z.number().optional().nullable().describe("Maximum item returned per page, default to 50 if not specified."),
+    no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
 }).describe('Query table data for a wowok object (parent field definition).');
 
 export const QueryTableItemSchema = z.object({
@@ -28,6 +29,7 @@ export const QueryTableItemSchema = z.object({
         type: z.string().describe("Type of the value."),
         value: z.unknown().describe('Value.')
     }).describe('The query key'),
+    no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
 }).describe("Query a piece of data in a wowok object (parent field definition) data table by using the query key.");
 
 export const QueryPermissionSchema = z.object({
@@ -47,52 +49,33 @@ export const QueryEventSchema = z.object({
     order: z.enum(['ascending', 'descending']).optional().nullable().describe('Query result ordering, default to "ascending order", oldest record first.')
 }).describe('Query event data');
 
+export const QueryByAddressSchema = z.object({
+    parent: z.string().nonempty().describe("The address of the parent object that owns the table."),
+    address: z.string().nonempty().describe('The query key(address) of the table item.'),
+    no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
+}).describe("Query the Service object recommended by someone from the Demand object.");
 
-export const QueryArbVotingSchema = z.object({
-    object: z.string().nonempty().describe("The address of the Arb object."),
-    address: z.string().nonempty().describe('The address has voted. ')
-});
 
-export const QueryDemandServiceSchema = z.object({
-    object: z.string().nonempty().describe("The address of the Demand object."),
-    address: z.string().nonempty().describe('The address of the Service object recommended by anyone')
-}).describe("");
+export const QueryByNameSchema = z.object({
+    parent: z.string().nonempty().describe("The address of the parent object that owns the table."),
+    name: z.string().nonempty().describe('The query key(name) of the table item.'),
+    no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
+}).describe('Query the table item by name from the object.');
 
-export const QueryPermissionEntitySchema = z.object({
-    object: z.string().nonempty().describe("The address of the Permission object."),
-    address: z.string().nonempty().describe('The address to query permissions. ')
-});
+export const QueryByIndexSchema = z.object({
+    parent: z.string().nonempty().describe("The address of the parent object that owns the table."),
+    index: z.number().int().min(0).describe('The query key(index) of the table item. Auto-incrementing index starting at 0.'),
+    no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
+}).describe("Query the table item by index from the object.");
 
-export const QueryMachineNodeSchema = z.object({
-    object: z.string().nonempty().describe("The address of the Machine object."),
-    name: z.string().nonempty().describe('The node name. ')
-});
 
-export const QueryServiceSaleSchema = z.object({
-    object: z.string().nonempty().describe("The address of the Service object."),
-    name: z.string().nonempty().describe('The sales item name. ')
-});
-
-export const QueryProgressHistorySchema = z.object({
-    object: z.string().nonempty().describe("The address of the Progress object."),
-    index: z.number().int().min(0).describe('Historical data index. Start at 0 and add 1 for each new record.')
-});
-
-export const QueryTreasuryHistorySchema = z.object({
-    object: z.string().nonempty().describe("The address of the Treasury object."),
-    index: z.number().int().min(0).describe('Historical data index. Start at 0 and add 1 for each new record.')
-});
-
-export const QueryRepositoryDataSchema = z.object({
-    object: z.string().nonempty().describe("The address of the Repository object."),
+export const QueryByAddressNameSchema = z.object({
+    parent: z.string().nonempty().describe("The Repository object that owns the table."),
     address: z.union([
         z.string().nonempty().describe('The address that own the data. '),
         z.number().int().min(0).describe('number converted to address, such as time.')
     ]),
-    name: z.string().nonempty().describe('Data field name.')
-});
+    name: z.string().nonempty().describe('Data field name.'),
+    no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
+}).describe('Query the data by the address and the name from the Repository object.');
 
-export const QueryMarkTagSchema = z.object({
-    object: z.string().nonempty().describe("The address of the PersonalMark object that privately owned by a user."),
-    address: z.string().nonempty().describe('The address to query the name and tags. ')
-});

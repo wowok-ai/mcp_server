@@ -8,13 +8,11 @@ import { query_objects, WOWOK, query_events, query_permission, query_table, call
   call_arbitration, call_permission, call_personal, call_transfer_permission, call_repository,
   queryTableItem_ArbVoting, queryTableItem_MachineNode, queryTableItem_MarkTag, queryTableItem_PermissionEntity,
   queryTableItem_ProgressHistory, queryTableItem_TreasuryHistory, queryTableItem_RepositoryData, ObjectsQuery,
-  PermissionQuery, PersonalQuery, queryTableItem_Personal, TableQuery, QueryArbVoting, QueryDemandService,
-  QueryServiceSale, QueryMachineNode, QueryRepositoryData, QueryPermissionEntity, QueryMarkTag, QueryTreasuryHistory,
-  QueryProgressHistory,
+  PermissionQuery, PersonalQuery, TableQuery, query_personal,
+  QueryTableItem_Address, QueryTableItem_Name, QueryTableItem_AddressName, QueryTableItem_Index,
   } from 'wowok_agent';
 import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryTableItemSchema, 
-  QueryArbVotingSchema, QueryDemandServiceSchema, QueryMachineNodeSchema, QueryMarkTagSchema, 
-  QueryPermissionEntitySchema, QueryProgressHistorySchema, QueryTreasuryHistorySchema, QueryServiceSaleSchema, QueryRepositoryDataSchema,
+  QueryByAddressNameSchema, QueryByIndexSchema, QueryByNameSchema, QueryByAddressSchema,
 } from './query.js';
 import { CallArbitrationSchema, CallDemandSchema, CallGuardSchema, CallMachineSchema, CallObejctPermissionSchema,
     CallPermissionSchema, CallPersonalSchema, CallRepositorySchema, CallServiceSchema, CallTreasurySchema,
@@ -219,47 +217,47 @@ const TOOLS: Tool[] = [
     {
         name: ToolName.QUERY_ARB_VOTING,
         description: "query voting information for an address in the Arb object.",
-        inputSchema: zodToJsonSchema(QueryArbVotingSchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_DEMAND_SERVICE,
         description: "query service recommendation information in the Demand object.",
-        inputSchema: zodToJsonSchema(QueryDemandServiceSchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_MACHINE_NODE,
         description: "query node information in the Machine object.",
-        inputSchema: zodToJsonSchema(QueryMachineNodeSchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_MARK_TAGS,
         description: "query name and tags for an address in the PersonalMark object",
-        inputSchema: zodToJsonSchema(QueryMarkTagSchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_PERMISSION_ENTITY,
         description: "query permissions for an address in the Permission object.",
-        inputSchema: zodToJsonSchema(QueryPermissionEntitySchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_REPOSITORY_DATA,
         description: "query data in the Repository object.",
-        inputSchema: zodToJsonSchema(QueryRepositoryDataSchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByAddressNameSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_PROGRESS_HISTORY,
         description: "query historical sessions data in the Progress object.",
-        inputSchema: zodToJsonSchema(QueryProgressHistorySchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_TREASURY_HISTORY,
         description: "query historical flows data in the Treasury object.",
-        inputSchema: zodToJsonSchema(QueryTreasuryHistorySchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_SERVICE_SALE,
         description: "query the current information of the item for sale in the Service object.",
-        inputSchema: zodToJsonSchema(QueryServiceSaleSchema)  as ToolInput,
+        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
     },
     {
         name: ToolName.OP_PERSONAL,
@@ -343,7 +341,7 @@ async function main() {
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://personal/")) {
             const query = parseUrlParams<PersonalQuery>(uri);
-            const r = await queryTableItem_Personal(query);
+            const r = await query_personal(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_PERSONAL)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_items/")) {
@@ -352,46 +350,46 @@ async function main() {
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_TABLE_ITEMS)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/arb/")) {
-            const query = parseUrlParams<QueryArbVoting>(uri);
+            const query = parseUrlParams<QueryTableItem_Address>(uri);
             const r = await queryTableItem_ArbVoting(query);
             return {tools:[], content:[JSON.stringify(r)]}
         } else if (uri.startsWith("wowok://table_item/demand/")) {
-            const query = parseUrlParams<QueryDemandService>(uri);
+            const query = parseUrlParams<QueryTableItem_Address>(uri);
             const r = await queryTableItem_DemandService(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_DEMAND_SERVICE)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/service/")) {
-            const query = parseUrlParams<QueryServiceSale>(uri);
+            const query = parseUrlParams<QueryTableItem_Name>(uri);
             const r = await queryTableItem_ServiceSale(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_SERVICE_SALE)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/machine/")) {
-            const query = parseUrlParams<QueryMachineNode>(uri);
+            const query = parseUrlParams<QueryTableItem_Name>(uri);
             const r = await queryTableItem_MachineNode(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_MACHINE_NODE)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/repository/")) {
-            const query = parseUrlParams<QueryRepositoryData>(uri);
+            const query = parseUrlParams<QueryTableItem_AddressName>(uri);
             const r = await queryTableItem_RepositoryData(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_REPOSITORY_DATA)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/permission/")) {
-            const query = parseUrlParams<QueryPermissionEntity>(uri);
+            const query = parseUrlParams<QueryTableItem_Address>(uri);
             const r = await queryTableItem_PermissionEntity(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_PERMISSION_ENTITY)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/personalmark/")) {
-            const query = parseUrlParams<QueryMarkTag>(uri);
+            const query = parseUrlParams<QueryTableItem_Address>(uri);
             const r = await queryTableItem_MarkTag(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_MARK_TAGS)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/treasury/")) {
-            const query = parseUrlParams<QueryTreasuryHistory>(uri);
+            const query = parseUrlParams<QueryTableItem_Index>(uri);
             const r = await queryTableItem_TreasuryHistory(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_TREASURY_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/progress/")) {
-            const query = parseUrlParams<QueryProgressHistory>(uri);
+            const query = parseUrlParams<QueryTableItem_Index>(uri);
             const r = await queryTableItem_ProgressHistory(query);
             const content = Object.assign(RESOURCES.find(v=>v.name===ToolName.QUERY_PROGRESS_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
@@ -465,7 +463,7 @@ async function main() {
 
             case ToolName.QUERY_PERSONAL: {
                 const args = QueryPersonalSchema.parse(request.params.arguments);
-                const r = await queryTableItem_Personal(args);
+                const r = await query_personal(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                 };
@@ -487,7 +485,7 @@ async function main() {
                 };
             }*/
             case ToolName.QUERY_ARB_VOTING: {
-              const args = QueryArbVotingSchema.parse(request.params.arguments);
+              const args = QueryByAddressSchema.parse(request.params.arguments);
               const r = await queryTableItem_ArbVoting(args);
               return {
                 content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -495,7 +493,7 @@ async function main() {
             }
       
             case ToolName.QUERY_MACHINE_NODE: {
-                const args = QueryMachineNodeSchema.parse(request.params.arguments);
+                const args = QueryByNameSchema.parse(request.params.arguments);
                 const r = await queryTableItem_MachineNode(args);
                 return {
                   content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -503,7 +501,7 @@ async function main() {
             }
       
             case ToolName.QUERY_MARK_TAGS: {
-                const args = QueryMarkTagSchema.parse(request.params.arguments);
+                const args = QueryByAddressSchema.parse(request.params.arguments);
                 const r = await queryTableItem_MarkTag(args);
                 return {
                   content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -511,7 +509,7 @@ async function main() {
             }
 
             case ToolName.QUERY_PERMISSION_ENTITY: {
-                const args = QueryPermissionEntitySchema.parse(request.params.arguments);
+                const args = QueryByAddressSchema.parse(request.params.arguments);
                 const r = await queryTableItem_PermissionEntity(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -519,7 +517,7 @@ async function main() {
             }
       
             case ToolName.QUERY_PROGRESS_HISTORY: {
-                const args = QueryProgressHistorySchema.parse(request.params.arguments);
+                const args = QueryByIndexSchema.parse(request.params.arguments);
                 const r = await queryTableItem_ProgressHistory(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -527,7 +525,7 @@ async function main() {
             }
       
             case ToolName.QUERY_TREASURY_HISTORY: {
-                const args = QueryTreasuryHistorySchema.parse(request.params.arguments);
+                const args = QueryByIndexSchema.parse(request.params.arguments);
                 const r = await queryTableItem_TreasuryHistory(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -535,7 +533,7 @@ async function main() {
             }
 
             case ToolName.QUERY_REPOSITORY_DATA: {
-                const args = QueryRepositoryDataSchema.parse(request.params.arguments);
+                const args = QueryByAddressNameSchema.parse(request.params.arguments);
                 const r = await queryTableItem_RepositoryData(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -543,7 +541,7 @@ async function main() {
             }
       
             case ToolName.QUERY_SERVICE_SALE: {
-                const args = QueryServiceSaleSchema.parse(request.params.arguments);
+                const args = QueryByNameSchema.parse(request.params.arguments);
                 const r = await queryTableItem_ServiceSale(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
@@ -551,7 +549,7 @@ async function main() {
             }
       
             case ToolName.QUERY_DEMAND_SERVICE: {
-                const args = QueryDemandServiceSchema.parse(request.params.arguments);
+                const args = QueryByAddressSchema.parse(request.params.arguments);
                 const r = await queryTableItem_DemandService(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
