@@ -43,3 +43,17 @@ export const LocalInfoOperationSchema = z.object({
     })).optional().describe("Add local info."),
     remove: z.array(z.string()).optional().describe("Remove local info by name."),
 }).describe('Local info operation, such as add local info or remove local info.');
+
+export const QueryLocalMarkSchema = z.object({
+    name: z.string().describe("The name of the local mark."),
+}).describe('Query local mark by name.');
+
+export const QueryLocalInfoSchema = z.object({  
+    name: z.string().default(LocalInfoNameDefault).describe("The name of the local info."),
+}).describe('Query local info by name.');
+
+export const LocalMarkFilterSchema = z.object({
+    name: z.string().optional().describe("The name of the local mark."),
+    tags: z.array(z.string()).optional().describe("The tags of the local mark."),
+    object: z.string().optional().describe("The object address of the local mark."),
+}).describe('Filter local marks by name, tags or object address.');
