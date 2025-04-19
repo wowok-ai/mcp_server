@@ -892,57 +892,55 @@ export const GuardWitness = z.object({
         cited: z.number().describe('Number of times the witness is cited'),
         type: ValueTypeSchema.describe('The Value type of the witness'),
         identifier: GuardIndentifierSchema.describe("The witness id in the Guard"),
-    })).describe('All the witness.')
-});
-
-export const CallGuardSchema = z.object({
-    data:CallGuardDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
-    witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
+    })).describe('All the witnesses.')
 });
 
 export const CallDemandSchema = z.object({
     data:CallDemandDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
     witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });
 
 export const CallRepositorySchema = z.object({
     data:CallRepositoryDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
     witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });
 export const CallMachineSchema = z.object({
     data:CallMachineDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
     witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });
 export const CallServiceSchema = z.object({
     data:CallServiceDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
     witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });
 export const CallTreasurySchema = z.object({
     data:CallTreasuryDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
     witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });
 export const CallPermissionSchema = z.object({
     data:CallPermissionDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
     witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });
 export const CallArbitrationSchema = z.object({
     data:CallArbitrationDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
     witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });
 export const CallPersonalSchema = z.object({
     data:CallPersonalDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
+});
+export const CallGuardSchema = z.object({
+    data:CallGuardDataSchema,
+    account: z.string().optional().describe('The account name that initiated the operation.'),
 });
 export const CallObejctPermissionSchema = z.object({
     data:CallObjectPermissionDataSchema,
-    account: z.string().default('').optional().describe('The account name that initiated the operation.'),
+    account: z.string().optional().describe('The account name that initiated the operation.'),
     witness: GuardWitness.optional().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.')
 });

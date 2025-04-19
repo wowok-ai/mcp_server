@@ -1,12 +1,13 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport, } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListResourceTemplatesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema, ToolSchema } from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListResourcesRequestSchema, ListResourceTemplatesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema, ToolSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { query_objects, WOWOK, query_events, query_permission, query_table, call_guard, call_demand, call_machine, call_service, call_treasury, queryTableItem_ServiceSale, queryTableItem_DemandService, call_arbitration, call_permission, call_personal, call_transfer_permission, call_repository, queryTableItem_ArbVoting, queryTableItem_MachineNode, queryTableItem_MarkTag, queryTableItem_PermissionEntity, queryTableItem_ProgressHistory, queryTableItem_TreasuryHistory, queryTableItem_RepositoryData, query_personal, } from 'wowok_agent';
+import { query_objects, WOWOK, query_events, query_permission, query_table, call_guard, call_demand, call_machine, call_service, call_treasury, queryTableItem_ServiceSale, queryTableItem_DemandService, call_arbitration, call_permission, call_personal, call_transfer_permission, call_repository, queryTableItem_ArbVoting, queryTableItem_MachineNode, queryTableItem_MarkTag, queryTableItem_PermissionEntity, queryTableItem_ProgressHistory, queryTableItem_TreasuryHistory, queryTableItem_RepositoryData, query_personal, local_mark_operation, local_info_operation, account_operation, LocalInfoNameDefault, query_local_mark_list, query_local_info_list, query_account, query_account_list, query_local_mark, query_local_info, } from 'wowok_agent';
 import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryByAddressNameSchema, QueryByIndexSchema, QueryByNameSchema, QueryByAddressSchema, } from './query.js';
 import { CallArbitrationSchema, CallDemandSchema, CallGuardSchema, CallMachineSchema, CallObejctPermissionSchema, CallPermissionSchema, CallPersonalSchema, CallRepositorySchema, CallServiceSchema, CallTreasurySchema, } from "./call.js";
 import { parseUrlParams } from "./util.js";
+import { AccountOperationSchema, LocalInfoOperationSchema, LocalMarkOperationSchema, QueryAccountSchema } from "./local.js";
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 export var ToolName;
 (function (ToolName) {
@@ -25,6 +26,12 @@ export var ToolName;
     ToolName["QUERY_TREASURY_HISTORY"] = "treasury_table_item";
     ToolName["QUERY_REPOSITORY_DATA"] = "repository_table_item";
     ToolName["QUERY_MARK_TAGS"] = "personalmark_table_item";
+    ToolName["QUERY_LOCAL_MARK_LIST"] = "local_mark_list";
+    ToolName["QUERY_LOCAL_INFO_LIST"] = "local_info_list";
+    ToolName["QUERY_ACCOUNT_LIST"] = "account_list";
+    ToolName["QUERY_LOCAL_MARK"] = "local_mark";
+    ToolName["QUERY_LOCAL_INFO"] = "local_info";
+    ToolName["QUERY_ACCOUNT"] = "account";
     ToolName["OP_PERSONAL"] = "personal_operations";
     ToolName["OP_MACHINE"] = "machine_operations";
     ToolName["OP_SERVICE"] = "service_operations";
@@ -35,6 +42,9 @@ export var ToolName;
     ToolName["OP_GUARD"] = "guard_operations";
     ToolName["OP_DEMAND"] = "demand_operations";
     ToolName["OP_REPLACE_PERMISSION_OBJECT"] = "replace_permission_object";
+    ToolName["OP_ACCOUNT"] = "account_operations";
+    ToolName["OP_LOCAL_MARK"] = "local_mark_operations";
+    ToolName["OP_LOCAL_INFO"] = "local_info_operations";
 })(ToolName || (ToolName = {}));
 export var EventName;
 (function (EventName) {
@@ -57,6 +67,26 @@ const server = new Server({
     },
 });
 const RESOURCES = [
+    {
+        uri: 'wowok://account/list',
+        name: ToolName.QUERY_ACCOUNT_LIST,
+        description: "your accounts",
+        mimeType: 'text/plain'
+    },
+    {
+        uri: 'wowok://local_mark/list',
+        name: ToolName.QUERY_LOCAL_MARK_LIST,
+        description: "your local marks",
+        mimeType: 'text/plain'
+    },
+    {
+        uri: 'wowok://local_info/list',
+        name: ToolName.QUERY_LOCAL_INFO_LIST,
+        description: "your local info, such as 'Address of delivery', etc..",
+        mimeType: 'text/plain'
+    },
+];
+const RESOURCES_TEMPL = [
     {
         uriTemplate: 'wowok://objects/{?objects*, showType, showContent, showOwner, no_cache}',
         name: ToolName.QUERY_OBJECTS,
@@ -159,6 +189,24 @@ const RESOURCES = [
         description: "query 'OnNewOrder' events",
         mimeType: 'text/plain'
     },
+    {
+        uriTemplate: 'wowok://account/{?name_or_address, balance_or_coin, token_type}',
+        name: ToolName.QUERY_ACCOUNT,
+        description: "query account information",
+        mimeType: 'text/plain'
+    },
+    {
+        uriTemplate: 'wowok://local_mark/{?name}',
+        name: ToolName.QUERY_LOCAL_MARK,
+        description: "query local mark",
+        mimeType: 'text/plain'
+    },
+    {
+        uriTemplate: 'wowok://local_info/{?name}',
+        name: ToolName.QUERY_LOCAL_INFO,
+        description: "query local info, such as 'Address of delivery', etc..",
+        mimeType: 'text/plain'
+    },
     /*{
         uriTemplate: 'wowok://table_item/{parent}{?key_type, key_value}',
         name: ToolName.QUERY_TABLE_ITEM,
@@ -243,6 +291,36 @@ const TOOLS = [
         inputSchema: zodToJsonSchema(QueryByNameSchema),
     },
     {
+        name: ToolName.QUERY_LOCAL_MARK_LIST,
+        description: "query local mark list",
+        inputSchema: zodToJsonSchema(z.void()),
+    },
+    {
+        name: ToolName.QUERY_LOCAL_INFO_LIST,
+        description: "query local info list",
+        inputSchema: zodToJsonSchema(z.void()),
+    },
+    {
+        name: ToolName.QUERY_ACCOUNT_LIST,
+        description: "query account list",
+        inputSchema: zodToJsonSchema(z.void()),
+    },
+    {
+        name: ToolName.QUERY_LOCAL_MARK,
+        description: "query local mark",
+        inputSchema: zodToJsonSchema(z.string().describe('The name of the local mark.')),
+    },
+    {
+        name: ToolName.QUERY_LOCAL_INFO,
+        description: "query local info",
+        inputSchema: zodToJsonSchema(z.string().default(LocalInfoNameDefault).describe('The name of the local info.')),
+    },
+    {
+        name: ToolName.QUERY_ACCOUNT,
+        description: "query account",
+        inputSchema: zodToJsonSchema(QueryAccountSchema),
+    },
+    {
         name: ToolName.OP_PERSONAL,
         description: "operations on the wowok Personal object",
         inputSchema: zodToJsonSchema(CallPersonalSchema),
@@ -293,11 +371,29 @@ const TOOLS = [
         description: 'Batch modify the Permission object of wowok objects.' +
             'Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.'
     },
+    {
+        name: ToolName.OP_LOCAL_MARK,
+        inputSchema: zodToJsonSchema(LocalMarkOperationSchema),
+        description: 'Local mark operation, such as add or set local marks, remove local marks or remove all local marks.'
+    },
+    {
+        name: ToolName.OP_LOCAL_INFO,
+        inputSchema: zodToJsonSchema(LocalInfoOperationSchema),
+        description: 'Local info operation, such as add local info or remove local info. '
+    },
+    {
+        name: ToolName.OP_ACCOUNT,
+        inputSchema: zodToJsonSchema(AccountOperationSchema),
+        description: 'Account operation, such as generate a new account or transfer token from one account to another.'
+    }
 ];
 async function main() {
     const transport = new StdioServerTransport();
+    server.setRequestHandler(ListResourcesRequestSchema, async () => {
+        return { resources: RESOURCES };
+    });
     server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
-        return { resourceTemplates: RESOURCES };
+        return { resourceTemplates: RESOURCES_TEMPL };
     });
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         const uri = request.params.uri;
@@ -305,25 +401,25 @@ async function main() {
             var query = parseUrlParams(uri);
             query.objects = query.objects.filter(v => WOWOK.IsValidAddress(v));
             const r = await query_objects(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_OBJECTS), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_OBJECTS), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://permissions/")) {
             const query = parseUrlParams(uri);
             const r = await query_permission(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_PERMISSIONS), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_PERMISSIONS), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://personal/")) {
             const query = parseUrlParams(uri);
             const r = await query_personal(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_PERSONAL), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_PERSONAL), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_items/")) {
             const query = parseUrlParams(uri);
             const r = await query_table(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_TABLE_ITEMS), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_TABLE_ITEMS), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_item/arb/")) {
@@ -334,49 +430,49 @@ async function main() {
         else if (uri.startsWith("wowok://table_item/demand/")) {
             const query = parseUrlParams(uri);
             const r = await queryTableItem_DemandService(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_DEMAND_SERVICE), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_DEMAND_SERVICE), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_item/service/")) {
             const query = parseUrlParams(uri);
             const r = await queryTableItem_ServiceSale(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_SERVICE_SALE), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_SERVICE_SALE), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_item/machine/")) {
             const query = parseUrlParams(uri);
             const r = await queryTableItem_MachineNode(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_MACHINE_NODE), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_MACHINE_NODE), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_item/repository/")) {
             const query = parseUrlParams(uri);
             const r = await queryTableItem_RepositoryData(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_REPOSITORY_DATA), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_REPOSITORY_DATA), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_item/permission/")) {
             const query = parseUrlParams(uri);
             const r = await queryTableItem_PermissionEntity(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_PERMISSION_ENTITY), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_PERMISSION_ENTITY), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_item/personalmark/")) {
             const query = parseUrlParams(uri);
             const r = await queryTableItem_MarkTag(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_MARK_TAGS), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_MARK_TAGS), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_item/treasury/")) {
             const query = parseUrlParams(uri);
             const r = await queryTableItem_TreasuryHistory(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_TREASURY_HISTORY), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_TREASURY_HISTORY), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.startsWith("wowok://table_item/progress/")) {
             const query = parseUrlParams(uri);
             const r = await queryTableItem_ProgressHistory(query);
-            const content = Object.assign(RESOURCES.find(v => v.name === ToolName.QUERY_PROGRESS_HISTORY), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_PROGRESS_HISTORY), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.toLocaleLowerCase().startsWith("wowok://events/onnewarb/")) {
@@ -384,7 +480,7 @@ async function main() {
             const r = await query_events({ type: 'OnNewArb',
                 cursor: query.cursor_eventSeq && query.cursor_txDigest ? { eventSeq: query.cursor_eventSeq, txDigest: query.cursor_txDigest } : undefined,
                 limit: query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending' });
-            const content = Object.assign(RESOURCES.find(v => v.name === EventName.new_arb), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === EventName.new_arb), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.toLocaleLowerCase().startsWith("wowok://events/onpresentservice/")) {
@@ -392,7 +488,7 @@ async function main() {
             const r = await query_events({ type: 'OnPresentService',
                 cursor: query.cursor_eventSeq && query.cursor_txDigest ? { eventSeq: query.cursor_eventSeq, txDigest: query.cursor_txDigest } : undefined,
                 limit: query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending' });
-            const content = Object.assign(RESOURCES.find(v => v.name === EventName.present_service), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === EventName.present_service), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.toLocaleLowerCase().startsWith("wowok://events/onnewprogress/")) {
@@ -400,7 +496,7 @@ async function main() {
             const r = await query_events({ type: 'OnNewProgress',
                 cursor: query.cursor_eventSeq && query.cursor_txDigest ? { eventSeq: query.cursor_eventSeq, txDigest: query.cursor_txDigest } : undefined,
                 limit: query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending' });
-            const content = Object.assign(RESOURCES.find(v => v.name === EventName.new_progress), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === EventName.new_progress), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         else if (uri.toLocaleLowerCase().startsWith("wowok://events/onneworder/")) {
@@ -408,7 +504,34 @@ async function main() {
             const r = await query_events({ type: 'OnNewOrder',
                 cursor: query.cursor_eventSeq && query.cursor_txDigest ? { eventSeq: query.cursor_eventSeq, txDigest: query.cursor_txDigest } : undefined,
                 limit: query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending' });
-            const content = Object.assign(RESOURCES.find(v => v.name === EventName.new_order), { uri: uri, text: JSON.stringify(r) });
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === EventName.new_order), { uri: uri, text: JSON.stringify(r) });
+            return { tools: [], contents: [content] };
+        }
+        else if (uri.toLocaleLowerCase().startsWith("wowok://local_mark/list")) {
+            return { tools: [], contents: [{ uri: uri, text: JSON.stringify(await query_local_mark_list()) }] };
+        }
+        else if (uri.toLocaleLowerCase().startsWith("wowok://local_info/list")) {
+            return { tools: [], contents: [{ uri: uri, text: JSON.stringify(await query_local_info_list()) }] };
+        }
+        else if (uri.toLocaleLowerCase().startsWith("wowok://account/list")) {
+            return { tools: [], contents: [{ uri: uri, text: JSON.stringify(await query_account_list()) }] };
+        }
+        else if (uri.toLocaleLowerCase().startsWith("wowok://local_mark/")) {
+            const query = parseUrlParams(uri);
+            const r = await query_local_mark(query.name);
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_LOCAL_MARK), { uri: uri, text: JSON.stringify(r) });
+            return { tools: [], contents: [content] };
+        }
+        else if (uri.toLocaleLowerCase().startsWith("wowok://local_info/")) {
+            const query = parseUrlParams(uri);
+            const r = await query_local_info(query.name);
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_LOCAL_INFO), { uri: uri, text: JSON.stringify(r) });
+            return { tools: [], contents: [content] };
+        }
+        else if (uri.toLocaleLowerCase().startsWith("wowok://account/")) {
+            const query = parseUrlParams(uri);
+            const r = await query_account(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v => v.name === ToolName.QUERY_ACCOUNT), { uri: uri, text: JSON.stringify(r) });
             return { tools: [], contents: [content] };
         }
         throw new Error(`Unknown resource: ${uri}`);
@@ -527,6 +650,45 @@ async function main() {
                         content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                     };
                 }
+                case ToolName.QUERY_LOCAL_MARK_LIST: {
+                    const r = await query_local_mark_list();
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
+                case ToolName.QUERY_LOCAL_INFO_LIST: {
+                    const r = await query_local_info_list();
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
+                case ToolName.QUERY_ACCOUNT_LIST: {
+                    const r = await query_account_list();
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
+                case ToolName.QUERY_LOCAL_MARK: {
+                    const args = z.string().parse(request.params.arguments);
+                    const r = await query_local_mark(args);
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
+                case ToolName.QUERY_LOCAL_INFO: {
+                    const args = z.string().parse(request.params.arguments);
+                    const r = await query_local_info(args);
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
+                case ToolName.QUERY_ACCOUNT: {
+                    const args = QueryAccountSchema.parse(request.params.arguments);
+                    const r = await query_account(args);
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
                 case ToolName.OP_GUARD: {
                     const args = CallGuardSchema.parse(request.params.arguments);
                     const r = await call_guard(args);
@@ -593,6 +755,27 @@ async function main() {
                 case ToolName.OP_REPOSITORY: {
                     const args = CallRepositorySchema.parse(request.params.arguments);
                     const r = await call_repository(args);
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
+                case ToolName.OP_LOCAL_MARK: {
+                    const args = LocalMarkOperationSchema.parse(request.params.arguments);
+                    const r = await local_mark_operation(args);
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
+                case ToolName.OP_LOCAL_INFO: {
+                    const args = LocalInfoOperationSchema.parse(request.params.arguments);
+                    const r = await local_info_operation(args);
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    };
+                }
+                case ToolName.OP_ACCOUNT: {
+                    const args = AccountOperationSchema.parse(request.params.arguments);
+                    const r = await account_operation(args);
                     return {
                         content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                     };
