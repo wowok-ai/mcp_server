@@ -31,10 +31,6 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
   Retrieve the personal infomation by the name (e.g. 'address of delivery').  
   - `name`: the name of infomation (e.g. 'address of delivery')
 
-- **personal infomation locally**   
-  Retrieve the personal infomation by the name (e.g. 'address of delivery').   
-  wowok://local_info/{?name}
-
 - **objects**    
   Query wowok objects   
   Input: array of objects, Each object contains:  
