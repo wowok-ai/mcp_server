@@ -11,7 +11,7 @@ import { query_objects, WOWOK, query_events, query_permission, query_table, call
   queryTableItem_ProgressHistory, queryTableItem_TreasuryHistory, queryTableItem_RepositoryData, ObjectsQuery,
   PermissionQuery, PersonalQuery, TableQuery, query_personal,
   QueryTableItem_Address, QueryTableItem_Name, QueryTableItem_AddressName, QueryTableItem_Index,
-  local_mark_operation, local_info_operation, account_operation, LocalInfoNameDefault, 
+  local_mark_operation, local_info_operation, account_operation, 
   query_local_mark_list, query_local_info_list, query_account,
   query_account_list, query_local_mark, query_local_info, QueryAccount, LocalMarkFilter,
   } from 'wowok_agent';
@@ -110,13 +110,13 @@ const RESOURCES: Resource[] = [
 
 const RESOURCES_TEMPL: ResourceTemplate[] = [
     {
-        uriTemplate: 'wowok://objects/{?objects*, showType, showContent, showOwner, no_cache}',
+        uriTemplate: 'wowok://objects/{?objects*, no_cache}',
         name:ToolName.QUERY_OBJECTS,
         description:"query wowok objects",
         mimeType:'text/plain'
     },
     {
-        uriTemplate: 'wowok://permissions/{?permission_object,address}',
+        uriTemplate: 'wowok://permissions/{?permission_object, address}',
         name: ToolName.QUERY_PERMISSIONS,
         description: "query permissions of an address from the wowok Permission object",
         mimeType:'text/plain'
@@ -319,36 +319,36 @@ const TOOLS: Tool[] = [
         description: "query the current information of the item for sale in the Service object.",
         inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
     },
-    {
+    /*{
         name: ToolName.QUERY_LOCAL_MARK_LIST,
-        description: "query local mark list",
+        description: "retrieve locally stored marks by the name, tags and object filters.",
         inputSchema: zodToJsonSchema(LocalMarkFilterSchema)  as ToolInput,
-    },
+    },*/
     {
         name: ToolName.QUERY_LOCAL_INFO_LIST,
-        description: "query local info list",
+        description: "retrieve all locally stored personal infomation (e.g. address of delivery)",
         inputSchema: zodToJsonSchema(z.object({}))  as ToolInput,
     },
     {
         name: ToolName.QUERY_ACCOUNT_LIST,
-        description: "query account list",
+        description: "retrieve all locally stored accounts",
         inputSchema: zodToJsonSchema(z.object({}))  as ToolInput,
     },
     {
         name: ToolName.QUERY_LOCAL_MARK,
-        description: "query local mark",
+        description: "retrieve locally stored marks by the name, tags and object filters.",
         inputSchema: zodToJsonSchema(QueryLocalMarkSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_LOCAL_INFO,
-        description: "query local info",
+        description: "retrieve the personal infomation by the name (e.g. 'address of delivery')",
         inputSchema: zodToJsonSchema(QueryLocalInfoSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_ACCOUNT,
-        description: "query account",
+        description: "retrieve balance or coins of the token type by the name or address",
         inputSchema: zodToJsonSchema(QueryAccountSchema)  as ToolInput,
-    },
+    }, 
     {
         name: ToolName.OP_PERSONAL,
         description: "operations on the wowok Personal object",
@@ -853,7 +853,6 @@ async function main() {
         return {content:[]}
     });
 
-    //console.log(JSON.stringify('WoWok MCP server started.'))  
     await server.connect(transport);
 
     // Cleanup on exit
@@ -865,12 +864,9 @@ async function main() {
 }
 
 async function cleanup() {
-   // console.log({content:'WoWok MCP server closed.'})  
 }
 
 main().catch((error) => {
-    //console.log("Server error:", error);
-    //console.log('WoWok MCP server exited.') 
     process.exit(1);
 });
 

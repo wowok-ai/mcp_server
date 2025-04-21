@@ -9,6 +9,32 @@ Docs: [https://github.com/wowok-ai/wowok/wiki](https://github.com/wowok-ai/wowok
 X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
 
 ## Tools
+- **account_list**
+  Retrieve all locally stored accounts
+
+- **local_info_list**
+  Retrieve all locally stored personal infomation (e.g. address of delivery)
+
+- **local_mark**
+  Retrieve locally stored marks by the name, tags and object filters.
+    - `name`: the name of the mark
+    - `tags`: tags of the mark
+    - `object`: the object address
+
+- **account**
+  Retrieve balance or coins of the token type by the name or address
+    - `name_or_address` : personal address or its mark name.
+    - `token_type` : token type 
+    - `balance_or_coin` : 'balance' or 'coin' to fetch.
+
+- **local_info**
+  Retrieve the personal infomation by the name (e.g. 'address of delivery')
+  - `name`: the name of infomation (e.g. 'address of delivery')
+
+- **personal infomation locally**
+  Retrieve the personal infomation by the name (e.g. 'address of delivery')
+  wowok://local_info/{?name}
+
 - **objects**
   Query wowok objects
   Input: array of objects, Each object contains:
@@ -145,14 +171,54 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
       - `objects` (string[], required): The address of the wowok objects(Machine,  Service, Demand, Arbitration, Treasury, Repository).
       - `new_permission` (string): The address of the Permission object that Replaces the original Permission object.
 
+- **local_mark_operations**
+  Local mark operation, such as add or set local marks, remove local marks or remove all local marks.
+  Input: *LocalMarkOperationSchema*
+
+- **local_info_operations**
+  Local info operation, such as add local info or remove local info.
+  Input: *LocalInfoOperationSchema*
+
+- **account_operations**
+  Account operation, such as generate a new account or transfer token from one account to another.
+  Input: *AccountOperationSchema*
+
 ## Resources
+- **the list of accounts**
+  Retrieve all locally stored accounts
+  wowok://account/list
+
+- **the list of marks locally**
+  Retrieve all locally stored marks
+  wowok://local_mark/list
+
+- **the list of local personal infomation**
+  Retrieve all locally stored personal data (e.g. address of delivery)
+  wowok://local_info/list
+
+- **account**
+  Retrieve balance or coins of the token type by the name or address
+  wowok://account/{?name_or_address, balance_or_coin, token_type}
+
+- **address locally marked**
+  Retrieve the address by the marked name.
+  wowok://local_mark/{?name}
+
+- **addresses locally marked**
+  Retrieve the addresses filtered by the name, tags and address.
+  wowok://local_mark/filter/{?name, tags*, object}
+
+- **personal infomation locally**
+  Retrieve the personal infomation by the name (e.g. 'address of delivery')
+  wowok://local_info/{?name}
+
 - **objects**
   Query wowok objects
-  wowok://objects/{?objects*, showType, showContent, showOwner, no_cache}
+  wowok://objects/{?objects*, no_cache}
 
 - **permissions**
   Query permissions of an address from the wowok Permission object
-  wowok://permissions/{?permission_object,address}
+  wowok://permissions/{?permission_object, address}
 
 - **personal_information**
   Query personal information for an address
@@ -213,6 +279,8 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
 - **new_order_events**
   Query 'OnNewOrder' events
   wowok://events/OnNewOrder/{?cursor_eventSeq, cursor_txDigest, limit, order}
+
+
 
 
 ## Setup   
