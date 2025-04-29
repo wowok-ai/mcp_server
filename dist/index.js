@@ -3,11 +3,11 @@ import { StdioServerTransport, } from "@modelcontextprotocol/sdk/server/stdio.js
 import { CallToolRequestSchema, ListResourcesRequestSchema, ListResourceTemplatesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema, ToolSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { query_objects, WOWOK, query_events, query_permission, query_table, call_guard, call_demand, call_machine, call_service, call_treasury, queryTableItem_ServiceSale, queryTableItem_DemandService, call_arbitration, call_permission, call_personal, call_transfer_permission, call_repository, queryTableItem_ArbVoting, queryTableItem_MachineNode, queryTableItem_MarkTag, queryTableItem_PermissionEntity, queryTableItem_ProgressHistory, queryTableItem_TreasuryHistory, queryTableItem_RepositoryData, query_personal, local_mark_operation, local_info_operation, account_operation, LocalInfoNameDefault, query_local_mark_list, query_local_info_list, query_account, query_account_list, query_local_mark, query_local_info, } from 'wowok_agent';
+import { query_objects, WOWOK, query_events, query_permission, query_table, call_guard, call_demand, call_machine, call_service, call_treasury, queryTableItem_ServiceSale, queryTableItem_DemandService, call_arbitration, call_permission, call_personal, call_transfer_permission, call_repository, queryTableItem_ArbVoting, queryTableItem_MachineNode, queryTableItem_MarkTag, queryTableItem_PermissionEntity, queryTableItem_ProgressHistory, queryTableItem_TreasuryHistory, queryTableItem_RepositoryData, query_personal, local_mark_operation, local_info_operation, account_operation, query_local_mark_list, query_local_info_list, query_account, query_account_list, query_local_mark, query_local_info, } from 'wowok_agent';
 import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryByAddressNameSchema, QueryByIndexSchema, QueryByNameSchema, QueryByAddressSchema, } from './query.js';
 import { CallArbitrationSchema, CallDemandSchema, CallGuardSchema, CallMachineSchema, CallObejctPermissionSchema, CallPermissionSchema, CallPersonalSchema, CallRepositorySchema, CallServiceSchema, CallTreasurySchema, } from "./call.js";
 import { parseUrlParams } from "./util.js";
-import { AccountOperationSchema, LocalInfoOperationSchema, LocalMarkOperationSchema, QueryAccountSchema } from "./local.js";
+import { AccountOperationSchema, LocalInfoOperationSchema, LocalMarkFilterSchema, LocalMarkOperationSchema, QueryAccountSchema, QueryLocalInfoSchema, QueryLocalMarkSchema } from "./local.js";
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 export var ToolName;
 (function (ToolName) {
@@ -27,6 +27,7 @@ export var ToolName;
     ToolName["QUERY_REPOSITORY_DATA"] = "repository_table_item";
     ToolName["QUERY_MARK_TAGS"] = "personalmark_table_item";
     ToolName["QUERY_LOCAL_MARK_LIST"] = "local_mark_list";
+    ToolName["QUERY_LOCAL_MARK_FILTER"] = "local_mark_filter";
     ToolName["QUERY_LOCAL_INFO_LIST"] = "local_info_list";
     ToolName["QUERY_ACCOUNT_LIST"] = "account_list";
     ToolName["QUERY_LOCAL_MARK"] = "local_mark";
@@ -88,13 +89,13 @@ const RESOURCES = [
 ];
 const RESOURCES_TEMPL = [
     {
-        uriTemplate: 'wowok://objects/{?objects*, showType, showContent, showOwner, no_cache}',
+        uriTemplate: 'wowok://objects/{?objects*, no_cache}',
         name: ToolName.QUERY_OBJECTS,
         description: "query wowok objects",
         mimeType: 'text/plain'
     },
     {
-        uriTemplate: 'wowok://permissions/{?permission_object,address}',
+        uriTemplate: 'wowok://permissions/{?permission_object, address}',
         name: ToolName.QUERY_PERMISSIONS,
         description: "query permissions of an address from the wowok Permission object",
         mimeType: 'text/plain'
@@ -207,6 +208,12 @@ const RESOURCES_TEMPL = [
         description: "query local info, such as 'Address of delivery', etc..",
         mimeType: 'text/plain'
     },
+    {
+        uriTemplate: 'wowok://local_mark/filter/{?name, tags*, object}',
+        name: ToolName.QUERY_LOCAL_MARK_FILTER,
+        description: "query local marks filter by name, tags and object address.",
+        mimeType: 'text/plain'
+    },
     /*{
         uriTemplate: 'wowok://table_item/{parent}{?key_type, key_value}',
         name: ToolName.QUERY_TABLE_ITEM,
@@ -290,34 +297,34 @@ const TOOLS = [
         description: "query the current information of the item for sale in the Service object.",
         inputSchema: zodToJsonSchema(QueryByNameSchema),
     },
-    {
+    /*{
         name: ToolName.QUERY_LOCAL_MARK_LIST,
-        description: "query local mark list",
-        inputSchema: zodToJsonSchema(z.void()),
-    },
+        description: "retrieve locally stored marks by the name, tags and object filters.",
+        inputSchema: zodToJsonSchema(LocalMarkFilterSchema)  as ToolInput,
+    },*/
     {
         name: ToolName.QUERY_LOCAL_INFO_LIST,
-        description: "query local info list",
-        inputSchema: zodToJsonSchema(z.void()),
+        description: "retrieve all locally stored personal infomation (e.g. address of delivery)",
+        inputSchema: zodToJsonSchema(z.object({})),
     },
     {
         name: ToolName.QUERY_ACCOUNT_LIST,
-        description: "query account list",
-        inputSchema: zodToJsonSchema(z.void()),
+        description: "retrieve all locally stored accounts",
+        inputSchema: zodToJsonSchema(z.object({})),
     },
     {
         name: ToolName.QUERY_LOCAL_MARK,
-        description: "query local mark",
-        inputSchema: zodToJsonSchema(z.string().describe('The name of the local mark.')),
+        description: "retrieve locally stored marks by the name, tags and object filters.",
+        inputSchema: zodToJsonSchema(QueryLocalMarkSchema),
     },
     {
         name: ToolName.QUERY_LOCAL_INFO,
-        description: "query local info",
-        inputSchema: zodToJsonSchema(z.string().default(LocalInfoNameDefault).describe('The name of the local info.')),
+        description: "retrieve the personal infomation by the name (e.g. 'address of delivery')",
+        inputSchema: zodToJsonSchema(QueryLocalInfoSchema),
     },
     {
         name: ToolName.QUERY_ACCOUNT,
-        description: "query account",
+        description: "retrieve balance or coins of the token type by the name or address",
         inputSchema: zodToJsonSchema(QueryAccountSchema),
     },
     {
@@ -516,6 +523,12 @@ async function main() {
         else if (uri.toLocaleLowerCase().startsWith("wowok://account/list")) {
             return { tools: [], contents: [{ uri: uri, text: JSON.stringify(await query_account_list()) }] };
         }
+        else if (uri.toLocaleLowerCase().startsWith('wowok://local_mark/filter/')) {
+            const query = parseUrlParams(uri);
+            server.sendLoggingMessage({ level: 'info', message: JSON.stringify(query) });
+            const r = await query_local_mark_list(query);
+            return { tools: [], contents: [{ uri: uri, text: JSON.stringify(r) }] };
+        }
         else if (uri.toLocaleLowerCase().startsWith("wowok://local_mark/")) {
             const query = parseUrlParams(uri);
             const r = await query_local_mark(query.name);
@@ -651,33 +664,34 @@ async function main() {
                     };
                 }
                 case ToolName.QUERY_LOCAL_MARK_LIST: {
-                    const r = await query_local_mark_list();
+                    const args = LocalMarkFilterSchema.parse(request.params.arguments);
+                    const r = await query_local_mark_list(args);
                     return {
-                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                        content: [{ type: "text", text: JSON.stringify(r) }],
                     };
                 }
                 case ToolName.QUERY_LOCAL_INFO_LIST: {
                     const r = await query_local_info_list();
                     return {
-                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                        content: [{ type: "text", text: JSON.stringify(r) }],
                     };
                 }
                 case ToolName.QUERY_ACCOUNT_LIST: {
                     const r = await query_account_list();
                     return {
-                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                        content: [{ type: "text", text: JSON.stringify(r) }],
                     };
                 }
                 case ToolName.QUERY_LOCAL_MARK: {
-                    const args = z.string().parse(request.params.arguments);
-                    const r = await query_local_mark(args);
+                    const args = QueryLocalMarkSchema.parse(request.params.arguments);
+                    const r = await query_local_mark(args.name);
                     return {
                         content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                     };
                 }
                 case ToolName.QUERY_LOCAL_INFO: {
-                    const args = z.string().parse(request.params.arguments);
-                    const r = await query_local_info(args);
+                    const args = QueryLocalInfoSchema.parse(request.params.arguments);
+                    const r = await query_local_info(args.name);
                     return {
                         content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                     };
@@ -761,16 +775,16 @@ async function main() {
                 }
                 case ToolName.OP_LOCAL_MARK: {
                     const args = LocalMarkOperationSchema.parse(request.params.arguments);
-                    const r = await local_mark_operation(args);
+                    await local_mark_operation(args);
                     return {
-                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                        content: [{ type: "text", text: 'success' }],
                     };
                 }
                 case ToolName.OP_LOCAL_INFO: {
                     const args = LocalInfoOperationSchema.parse(request.params.arguments);
-                    const r = await local_info_operation(args);
+                    await local_info_operation(args);
                     return {
-                        content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                        content: [{ type: "text", text: 'success' }],
                     };
                 }
                 case ToolName.OP_ACCOUNT: {
@@ -792,7 +806,6 @@ async function main() {
         }
         return { content: [] };
     });
-    //console.log(JSON.stringify('WoWok MCP server started.'))  
     await server.connect(transport);
     // Cleanup on exit
     process.on("SIGINT", async () => {
@@ -802,11 +815,8 @@ async function main() {
     });
 }
 async function cleanup() {
-    // console.log({content:'WoWok MCP server closed.'})  
 }
 main().catch((error) => {
-    //console.log("Server error:", error);
-    //console.log('WoWok MCP server exited.') 
     process.exit(1);
 });
 process.stdin.on("close", async () => {

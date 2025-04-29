@@ -11,8 +11,7 @@ import { query_objects, WOWOK, query_events, query_permission, query_table, call
   queryTableItem_ProgressHistory, queryTableItem_TreasuryHistory, queryTableItem_RepositoryData, ObjectsQuery,
   PermissionQuery, PersonalQuery, TableQuery, query_personal,
   QueryTableItem_Address, QueryTableItem_Name, QueryTableItem_AddressName, QueryTableItem_Index,
-  local_mark_operation, local_info_operation, account_operation, 
-  query_local_mark_list, query_local_info_list, query_account,
+  local_mark_operation, local_info_operation, account_operation, query_local_mark_list, query_local_info_list, query_account, 
   query_account_list, query_local_mark, query_local_info, QueryAccount, LocalMarkFilter,
   } from 'wowok_agent';
 import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryTableItemSchema, 
@@ -538,6 +537,7 @@ async function main() {
             return {tools:[], contents:[{uri:uri, text:JSON.stringify(await query_account_list())}]}    
         } else if (uri.toLocaleLowerCase().startsWith('wowok://local_mark/filter/')) {
             const query = parseUrlParams<LocalMarkFilter>(uri);  
+            server.sendLoggingMessage({level:'info', message:JSON.stringify(query)})
             const r = await query_local_mark_list(query)
             return {tools:[], contents:[{uri:uri, text:JSON.stringify(r)}]}
         } else if (uri.toLocaleLowerCase().startsWith("wowok://local_mark/")) {
@@ -694,7 +694,7 @@ async function main() {
                 const args = LocalMarkFilterSchema.parse(request.params.arguments);
                 const r = await query_local_mark_list(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -786,7 +786,10 @@ async function main() {
 
             case ToolName.OP_PERMISSION: {
                 const args = CallPermissionSchema.parse(request.params.arguments);
+                server.sendLoggingMessage({level:'info', message:JSON.stringify(args)})
                 const r = await call_permission(args);
+                server.sendLoggingMessage({level:'info', message:JSON.stringify(r)})
+
                 return {
                     content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                 };
@@ -818,17 +821,17 @@ async function main() {
 
             case ToolName.OP_LOCAL_MARK: {
                 const args = LocalMarkOperationSchema.parse(request.params.arguments);
-                const r = await local_mark_operation(args);
+                await local_mark_operation(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: 'success'}],
                 };
             }
 
             case ToolName.OP_LOCAL_INFO: {
-                const args = LocalInfoOperationSchema.parse(request.params.arguments);      
-                const r = await local_info_operation(args);        
+                const args = LocalInfoOperationSchema.parse(request.params.arguments);    
+                await local_info_operation(args);       
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: 'success'}],
                 };  
             }
 
@@ -853,6 +856,7 @@ async function main() {
         return {content:[]}
     });
 
+    
     await server.connect(transport);
 
     // Cleanup on exit

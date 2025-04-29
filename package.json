@@ -1,6 +1,6 @@
 {
   "name": "wowok_mcp",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "MCP server for WoWok: Maximization of utility and optimization of talent.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
