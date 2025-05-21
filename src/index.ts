@@ -21,7 +21,7 @@ import { CallArbitrationSchema, CallDemandSchema, CallGuardSchema, CallMachineSc
     CallPermissionSchema, CallPersonalSchema, CallRepositorySchema, CallServiceSchema, CallTreasurySchema,
  } from "./call.js";
 import { parseUrlParams } from "./util.js"; 
-import { AccountOperationSchema, LocalInfoOperationSchema, LocalMarkFilterSchema, LocalMarkOperationSchema, QueryAccountSchema, QueryLocalInfoSchema, QueryLocalMarkSchema } from "./local.js";
+import { AccountListSechma, AccountOperationSchema, LocalInfoOperationSchema, LocalMarkFilterSchema, LocalMarkOperationSchema, QueryAccountSchema, QueryLocalInfoSchema, QueryLocalMarkSchema } from "./local.js";
 
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
@@ -318,11 +318,11 @@ const TOOLS: Tool[] = [
         description: "query the current information of the item for sale in the Service object.",
         inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
     },
-    /*{
+    {
         name: ToolName.QUERY_LOCAL_MARK_LIST,
         description: "retrieve locally stored marks by the name, tags and object filters.",
         inputSchema: zodToJsonSchema(LocalMarkFilterSchema)  as ToolInput,
-    },*/
+    },
     {
         name: ToolName.QUERY_LOCAL_INFO_LIST,
         description: "retrieve all locally stored personal infomation (e.g. address of delivery)",
@@ -331,7 +331,7 @@ const TOOLS: Tool[] = [
     {
         name: ToolName.QUERY_ACCOUNT_LIST,
         description: "retrieve all locally stored accounts",
-        inputSchema: zodToJsonSchema(z.object({}))  as ToolInput,
+        inputSchema: zodToJsonSchema(AccountListSechma)  as ToolInput,
     },
     {
         name: ToolName.QUERY_LOCAL_MARK,
@@ -575,7 +575,7 @@ async function main() {
               const args = QueryObjectsSchema.parse(request.params.arguments);
               const r = await query_objects(args);
               return {
-                content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                content: [{ type: "text", text: JSON.stringify(r) }],
               };
             }
       
@@ -583,7 +583,7 @@ async function main() {
                 const args = QueryEventSchema.parse(request.params.arguments);
                 const r = await query_events(args);
                 return {
-                  content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                  content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -591,7 +591,7 @@ async function main() {
                 const args = QueryPermissionSchema.parse(request.params.arguments);
                 const r = await query_permission(args);
                 return {
-                  content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                  content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -599,7 +599,7 @@ async function main() {
                 const args = QueryPersonalSchema.parse(request.params.arguments);
                 const r = await query_personal(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -607,7 +607,7 @@ async function main() {
                 const args = QueryTableItemsSchema.parse(request.params.arguments);
                 const r = await query_table(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -615,14 +615,14 @@ async function main() {
                 const args = QueryTableItemSchema.parse(request.params.arguments);
                 const r = await query_table(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }*/
             case ToolName.QUERY_ARB_VOTING: {
               const args = QueryByAddressSchema.parse(request.params.arguments);
               const r = await queryTableItem_ArbVoting(args);
               return {
-                content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                content: [{ type: "text", text: JSON.stringify(r) }],
               };
             }
       
@@ -630,7 +630,7 @@ async function main() {
                 const args = QueryByNameSchema.parse(request.params.arguments);
                 const r = await queryTableItem_MachineNode(args);
                 return {
-                  content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                  content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -638,7 +638,7 @@ async function main() {
                 const args = QueryByAddressSchema.parse(request.params.arguments);
                 const r = await queryTableItem_MarkTag(args);
                 return {
-                  content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                  content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -646,7 +646,7 @@ async function main() {
                 const args = QueryByAddressSchema.parse(request.params.arguments);
                 const r = await queryTableItem_PermissionEntity(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -654,7 +654,7 @@ async function main() {
                 const args = QueryByIndexSchema.parse(request.params.arguments);
                 const r = await queryTableItem_ProgressHistory(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -662,7 +662,7 @@ async function main() {
                 const args = QueryByIndexSchema.parse(request.params.arguments);
                 const r = await queryTableItem_TreasuryHistory(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -670,7 +670,7 @@ async function main() {
                 const args = QueryByAddressNameSchema.parse(request.params.arguments);
                 const r = await queryTableItem_RepositoryData(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -678,7 +678,7 @@ async function main() {
                 const args = QueryByNameSchema.parse(request.params.arguments);
                 const r = await queryTableItem_ServiceSale(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -686,7 +686,7 @@ async function main() {
                 const args = QueryByAddressSchema.parse(request.params.arguments);
                 const r = await queryTableItem_DemandService(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -706,7 +706,8 @@ async function main() {
             }
 
             case ToolName.QUERY_ACCOUNT_LIST: {
-                const r = await query_account_list();
+                const args = AccountListSechma.parse(request.params.arguments);
+                const r = await query_account_list(args?.showSuspendedAccount);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r) }],
                 };
@@ -716,7 +717,7 @@ async function main() {
                 const args = QueryLocalMarkSchema.parse(request.params.arguments);
                 const r = await query_local_mark(args.name);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 }
             }
 
@@ -724,7 +725,7 @@ async function main() {
                 const args = QueryLocalInfoSchema.parse(request.params.arguments);
                 const r = await query_local_info(args.name);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 }
             }
 
@@ -732,7 +733,7 @@ async function main() {
                 const args = QueryAccountSchema.parse(request.params.arguments);
                 const r = await query_account(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 }
             }
 
@@ -740,7 +741,7 @@ async function main() {
                 const args = CallGuardSchema.parse(request.params.arguments);
                 const r = await call_guard(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -748,7 +749,7 @@ async function main() {
                 const args = CallDemandSchema.parse(request.params.arguments);
                 const r = await call_demand(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -756,7 +757,7 @@ async function main() {
                 const args = CallMachineSchema.parse(request.params.arguments);
                 const r = await call_machine(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -764,7 +765,7 @@ async function main() {
                 const args = CallServiceSchema.parse(request.params.arguments);
                 const r = await call_service(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -772,7 +773,7 @@ async function main() {
                 const args = CallTreasurySchema.parse(request.params.arguments);
                 const r = await call_treasury(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -780,7 +781,7 @@ async function main() {
                 const args = CallArbitrationSchema.parse(request.params.arguments);
                 const r = await call_arbitration(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -791,7 +792,7 @@ async function main() {
                 server.sendLoggingMessage({level:'info', message:JSON.stringify(r)})
 
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
       
@@ -799,7 +800,7 @@ async function main() {
                 const args = CallPersonalSchema.parse(request.params.arguments);
                 const r = await call_personal(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -807,7 +808,7 @@ async function main() {
                 const args = CallObejctPermissionSchema.parse(request.params.arguments);
                 const r = await call_transfer_permission(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -815,7 +816,7 @@ async function main() {
                 const args = CallRepositorySchema.parse(request.params.arguments);
                 const r = await call_repository(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 
@@ -839,7 +840,7 @@ async function main() {
                 const args = AccountOperationSchema.parse(request.params.arguments);
                 const r = await account_operation(args);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
+                    content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
 

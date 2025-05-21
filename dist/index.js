@@ -297,11 +297,11 @@ const TOOLS = [
         description: "query the current information of the item for sale in the Service object.",
         inputSchema: zodToJsonSchema(QueryByNameSchema),
     },
-    /*{
+    {
         name: ToolName.QUERY_LOCAL_MARK_LIST,
         description: "retrieve locally stored marks by the name, tags and object filters.",
-        inputSchema: zodToJsonSchema(LocalMarkFilterSchema)  as ToolInput,
-    },*/
+        inputSchema: zodToJsonSchema(LocalMarkFilterSchema),
+    },
     {
         name: ToolName.QUERY_LOCAL_INFO_LIST,
         description: "retrieve all locally stored personal infomation (e.g. address of delivery)",
@@ -747,7 +747,9 @@ async function main() {
                 }
                 case ToolName.OP_PERMISSION: {
                     const args = CallPermissionSchema.parse(request.params.arguments);
+                    server.sendLoggingMessage({ level: 'info', message: JSON.stringify(args) });
                     const r = await call_permission(args);
+                    server.sendLoggingMessage({ level: 'info', message: JSON.stringify(r) });
                     return {
                         content: [{ type: "text", text: JSON.stringify(r, null, 2) }],
                     };
