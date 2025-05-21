@@ -1,16 +1,19 @@
 
 import { z } from "zod";
 
+export const QueryObjectsSchemaDescription = `Query the on-chain data of a wowok object.`;
 export const QueryObjectsSchema = z.object({
     objects: z.array(z.string()).describe("Wowok object addresses."),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
-}).describe('Query the data of a wowok object.');
+}).describe(QueryObjectsSchemaDescription);
 
+export const QueryPersonalSchemaDescription = `Query the on-chain personal data by its address.`;
 export const QueryPersonalSchema = z.object({
     address: z.string().describe("Personal address to query."),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
-}).describe('Query the personal/user address data.');
+}).describe(QueryPersonalSchemaDescription);
 
+export const QueryTableItemsSchemaDescription = `Query the on-chain table data for a wowok object (parent field definition).`;
 export const QueryTableItemsSchema = z.object({
     parent: z.string().describe("Wowok object address that owns the table."),
     cursor: z.string().optional().nullable().describe("An optional paging cursor. " + 
@@ -18,8 +21,9 @@ export const QueryTableItemsSchema = z.object({
         "Default to start from the first item if not specified."),
     limit: z.number().optional().nullable().describe("Maximum item returned per page, default to 50 if not specified."),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
-}).describe('Query table data for a wowok object (parent field definition).');
+}).describe(QueryTableItemsSchemaDescription);
 
+export const QueryTableItemSchemaDescription = `Query a piece of on-chain data in a wowok object (parent field definition) data table by using the query key.`;
 export const QueryTableItemSchema = z.object({
     parent: z.string().describe("Wowok object address that owns the table item."),
     key: z.object({
@@ -27,43 +31,45 @@ export const QueryTableItemSchema = z.object({
         value: z.unknown().describe('Value.')
     }).describe('The query key'),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
-}).describe("Query a piece of data in a wowok object (parent field definition) data table by using the query key.");
+}).describe(QueryTableItemSchemaDescription);
 
+export const QueryPermissionSchemaDescription = `Query all permissions for an address from the on-chain Permission object.`;
 export const QueryPermissionSchema = z.object({
     permission_object: z.string().describe("Wowok Permission object address."),
     address: z.string().describe("Address you want to query permission.")
-}).describe('Query all permissions for an address from the Permission object.');
+}).describe(QueryPermissionSchemaDescription);
 
 export const EventCursorSchema = z.object({
     eventSeq: z.string().describe('Event sequence.'),
     txDigest: z.string().describe('Transaction Digest.'),
 }).describe('Event retrieval cursor');
 
+export const QueryEventSchemaDescription = `Query the on-chain event data.`;
 export const QueryEventSchema = z.object({
     type: z.enum(['OnNewArb', 'OnPresentService', 'OnNewProgress', 'OnNewOrder']).describe("Type of Events: OnNewArb, OnPresentService, OnNewProgress, OnNewOrder"),
     cursor: EventCursorSchema.optional().nullable().describe('Paging cursor.'),
     limit: z.number().optional().nullable().describe('Mmaximum number of items per page, default to 50 if not specified.'),
     order: z.enum(['ascending', 'descending']).optional().nullable().describe('Query result ordering, default to "ascending order", oldest record first.')
-}).describe('Query event data');
+}).describe(QueryEventSchemaDescription);
 
 export const QueryByAddressSchema = z.object({
     parent: z.string().nonempty().describe("The address of the parent object that owns the table."),
     address: z.string().nonempty().describe('The query key(address) of the table item.'),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
-}).describe("Query the Service object recommended by someone from the Demand object.");
+}).describe("Query the table item by address from the on-chain object.");
 
 
 export const QueryByNameSchema = z.object({
     parent: z.string().nonempty().describe("The address of the parent object that owns the table."),
     name: z.string().nonempty().describe('The query key(name) of the table item.'),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
-}).describe('Query the table item by name from the object.');
+}).describe('Query the table item by name from the on-chain object.');
 
 export const QueryByIndexSchema = z.object({
     parent: z.string().nonempty().describe("The address of the parent object that owns the table."),
     index: z.number().int().min(0).describe('The query key(index) of the table item. Auto-incrementing index starting at 0.'),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
-}).describe("Query the table item by index from the object.");
+}).describe("Query the table item by index from the on-chain object.");
 
 
 export const QueryByAddressNameSchema = z.object({
@@ -74,5 +80,5 @@ export const QueryByAddressNameSchema = z.object({
     ]),
     name: z.string().nonempty().describe('Data field name.'),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
-}).describe('Query the data by the address and the name from the Repository object.');
+}).describe('Query the data by the address and the name from the on-chain Repository object.');
 

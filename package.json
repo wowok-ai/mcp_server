@@ -1,7 +1,7 @@
 {
   "name": "wowok_mcp",
-  "version": "1.0.16",
-  "description": "MCP server for WoWok: Maximization of utility and optimization of talent.",
+  "version": "1.1.17",
+  "description": "MCP server for WoWok: Unlock Co-Creation, Lighting Transaction, Empower Potential.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "module": "node",

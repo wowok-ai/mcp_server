@@ -230,7 +230,7 @@ export const CallGuardDataSchema = z.object({
         value_type: ValueTypeSchema,
         value: z.any().optional().describe('Data value for a constant, Ignored if the data is a witness.')
     })).optional().describe('Data table for Const or Witness'),
-}).describe('Data definition that operates on the Guard object. The operations are performed one after the other in the field order.');
+}).describe('Data definition that operates on the on-chain Guard object. The operations are performed one after the other in the field order.');
 
 export const CallMachineDataSchema = z.object({
     object: CallObjectSchema.optional().describe('Modify the existing Machine object or build a new one.'),
@@ -372,7 +372,7 @@ export const CallMachineDataSchema = z.object({
         namedNew: NamedObjectSchema.optional().describe('Newly named Machine object.'),
     }).optional().describe('The promised Settings cannot be changed after the Machine is published. ' + 
         'Clone allows it to be retained to copy a new Machine, inherit its Settings, and can be modified and released at any time.'),
-}).describe('Data definition that operates on the Machine object. The operations are performed one after the other in the field order.'); 
+}).describe('Data definition that operates on the on-chain Machine object. The operations are performed one after the other in the field order.'); 
 
 export const CallPermissionDataSchema = z.object({
     object: CallObjectSchema.optional().describe('Modify the existing Permission object or build a new one.'),
@@ -445,7 +445,7 @@ export const CallPermissionDataSchema = z.object({
     builder: z.string().nonempty().optional().describe('Modify the builder address.' + 
         'The Builder is the highest Permission object owner and has only one address.' + 
         'The default is the address of the signer of the transaction that created the Permission object.')
-}).describe('Data definition that operates on the Permission object. The operations are performed one after the other in the field order.');
+}).describe('Data definition that operates on the  on-chain Permission object. The operations are performed one after the other in the field order.');
 
 export const CallRepositoryDataSchema = z.object({
     object: CallObjectSchema.optional().describe('Modify the existing Repository object or build a new one.'),
@@ -526,7 +526,7 @@ export const CallRepositoryDataSchema = z.object({
         }).describe('Remove data from the Repository object. Each piece of data is uniquely identified by a field name and an address.')
     ]).optional().describe('Add or remove data to the Repository object.' + 
         'Each piece of data is uniquely identified by a field name and an address, which must be specified for querying, adding, and removing data.')
-}).describe('Data definition that operates on the Repository object. The operations are performed one after the other in the field order.');
+}).describe('Data definition that operates on the on-chain Repository object. The operations are performed one after the other in the field order.');
 
 export const CallArbitrationDataSchema = z.object({
     type_parameter: z.string().describe("The type of token paid for the Arbitration object. For example, 0x2::sui::SUI."),
@@ -602,7 +602,7 @@ export const CallArbitrationDataSchema = z.object({
         'If a certain Guard authentication is passed, the vote weight corresponding to the Guard is cast.'
     ),
     bPaused:z.boolean().optional().describe('If True, new Arb objects are allowed to be created; if False, no new Arb objects are allowed to be created.'),
-}).describe('Data definition that operates on the Arbitration object. The operations are performed one after the other in the field order.'); 
+}).describe('Data definition that operates on the on-chain Arbitration object. The operations are performed one after the other in the field order.'); 
 
 export const CallTreasuryDataSchema = z.object({
     type_parameter: z.string().describe("The type of token for the Treasury object. For example, 0x2::sui::SUI."),
@@ -662,7 +662,7 @@ export const CallTreasuryDataSchema = z.object({
         z.literal(WOWOK.Treasury_WithdrawMode.BOTH_PERMISSION_AND_GUARD)
             .describe(`All withdrawal methods are supported(${WOWOK.Treasury_WithdrawMode.PERMISSION} and ${WOWOK.Treasury_WithdrawMode.GUARD_ONLY_AND_IMMUTABLE}).` ),
     ]),
-}).describe('Data definition that operates on the Treasury object. The operations are performed one after the other in the field order.'); 
+}).describe('Data definition that operates on the on-chain Treasury object. The operations are performed one after the other in the field order.'); 
 
 export const CallServiceDataSchema = z.object({
     type_parameter: z.string().describe("The type of token for the Service object. For example, 0x2::sui::SUI."),
@@ -826,7 +826,7 @@ export const CallServiceDataSchema = z.object({
         token_type_new: z.string().optional().describe("The new type of token for the Service object."),
         namedNew:NamedObjectSchema.optional().describe('Newly named Service object.'),
     }).optional().describe('Clone a new Service object. Inheriting the original Settings (but not published yet), and could change the type of payment token.'),
-}).describe('Data definition that operates on the Service object. The operations are performed one after the other in the field order.'); 
+}).describe('Data definition that operates on the on-chain Service object. The operations are performed one after the other in the field order.'); 
 
 export const CallPersonalDataSchema = z.object({
     mark_object: CallObjectSchema.optional().describe('Modify the existing PersonalMark object or build a new one.'),
@@ -870,12 +870,12 @@ export const CallPersonalDataSchema = z.object({
             op: z.literal('destroy'),
         }).describe('Delete all marked addresses information, and destory the current Resource object.'),
     ]).optional().describe('Naming and management of personal marks(Resource object).')
-}).describe('Data definition that operates on the Personal infomation. The operations are performed one after the other in the field order.'); 
+}).describe('Data definition that operates on the on-chain Personal object. The operations are performed one after the other in the field order.'); 
 
 export const CallObjectPermissionDataSchema = z.object({
     objects: z.array(z.string().nonempty().describe('The address of the wowok object.')),
     new_permission: z.string().nonempty().describe('The address of the Permission object that Replaces the original Permission object.')
-}).describe('Batch modify the Permission object of wowok objects.' + 
+}).describe('Batch modify the on-chain Permission object of wowok objects.' + 
     'Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.' 
 );
 
@@ -891,55 +891,74 @@ export const GuardWitness = z.object({
     })).describe('All the witnesses.')
 });
 
-export const AccountSchema = z.string().optional().nullable().describe('The account name that initiated the operation.');
+export const AccountSchema = z.string().optional().nullable().describe('The account name or address that initiated the operation.');
 export const WitnessSchema = GuardWitness.optional().nullable().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.');
 
+export const CallDemandSchemaDescription = `Operate the on-chain Demand object using the local account signatures.`;
 export const CallDemandSchema = z.object({
     data:CallDemandDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-});
+}).describe(CallDemandSchemaDescription);
 
+export const CallRepositorySchemaDescription = `Operate the on-chain Repository object using the local account signatures.`;
 export const CallRepositorySchema = z.object({
     data:CallRepositoryDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-});
+}).describe(CallRepositorySchemaDescription);
+
+export const CallMachineSchemaDescription = `Operate the on-chain Machine object using the local account signatures.`;
 export const CallMachineSchema = z.object({
     data:CallMachineDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-});
+}).describe(CallMachineSchemaDescription);
+
+export const CallServiceSchemaDescription = `Operate the on-chain Service object using the local account signatures.`;
 export const CallServiceSchema = z.object({
     data:CallServiceDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-});
+}).describe(CallServiceSchemaDescription);
+
+export const CallTreasurySchemaDescription = `Operate the on-chain Treasury object using the local account signatures.`;
 export const CallTreasurySchema = z.object({
     data:CallTreasuryDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-});
+}).describe(CallTreasurySchemaDescription);
+
+export const CallPermissionSchemaDescription = `Operate the on-chain Permission object using the local account signatures.`;
 export const CallPermissionSchema = z.object({
     data:CallPermissionDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-});
+}).describe(CallPermissionSchemaDescription);
+
+export const CallArbitrationSchemaDescription = `Operate the on-chain Arbitration object using the local account signatures.`;
 export const CallArbitrationSchema = z.object({
     data:CallArbitrationDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-});
+}).describe(CallArbitrationSchemaDescription);
+
+export const CallPersonalSchemaDescription = `Operate the on-chain Personal object using the local account signatures.`;
 export const CallPersonalSchema = z.object({
     data:CallPersonalDataSchema,
     account: AccountSchema,
-});
+}).describe(CallPersonalSchemaDescription);
+
+export const CallGuardSchemaDescription = `Operate the on-chain Guard object using the local account signatures.`;
 export const CallGuardSchema = z.object({
     data:CallGuardDataSchema,
     account: AccountSchema,
-});
+}).describe(CallGuardSchemaDescription);
+
+export const CallObejctPermissionSchemaDescription = `Batch modify the on-chain Permission object of wowok objects using the local account signatures.
+    Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.`;
 export const CallObejctPermissionSchema = z.object({
     data:CallObjectPermissionDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-});
+}).describe(CallObejctPermissionSchemaDescription);  

@@ -9,45 +9,24 @@ Docs: [https://github.com/wowok-ai/wowok/wiki](https://github.com/wowok-ai/wowok
 X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
 
 ## Tools
-- **account_list**   
-  Retrieve all locally stored accounts.    
+### Query Wowok Objects
+  Query on-chain data of Wowok objects.
+  Input Parameters:
+  - `objects` (string[], required): Array of Wowok object addresses to query (e.g., delivery object address).
+  - `showType` (boolean, optional): Whether to display the type name, tags, and object details.
+  - `showContent` (boolean, optional): Whether to show the content of the objects.
+  - `showOwner` (boolean, optional): Whether to retrieve and display the owners of the objects by name or address.
+  - `no_cache` (boolean, optional): Whether to not use local cache data.
 
-- **local_info_list**    
-  Retrieve all locally stored personal infomation (e.g. address of delivery).    
-
-- **local_mark**   
-  Retrieve locally stored marks by the name, tags and object filters.    
-    - `name`: the name of the mark
-    - `tags`: tags of the mark
-    - `object`: the object address   
-
-- **account**    
-  Retrieve balance or coins of the token type by the name or address.   
-    - `name_or_address` : personal address or its mark name.
-    - `token_type` : token type 
-    - `balance_or_coin` : 'balance' or 'coin' to fetch.    
-
-- **local_info**    
-  Retrieve the personal infomation by the name (e.g. 'address of delivery').  
-  - `name`: the name of infomation (e.g. 'address of delivery')
-
-- **objects**    
-  Query wowok objects   
-  Input: array of objects, Each object contains:  
-    - `objects` (string[], required): Wowok object addresses to query.
-    - `showType` (boolean): Whether to show the type of the objects.
-    - `showContent` (boolean): Whether to show the content of the objects.
-    - `showOwner` (boolean): Whether to show the owner of the objects.
-    - `no_cache` (boolean): Whether to not use local cache data.
-
-- **events**    
-  Query wowok events.
-  Input: 
-    - `type` (string, required): 'OnNewArb' | 'OnPresentService'| 'OnNewProgress' | 'OnNewOrder'
-    - `cursor` (object): Paging cursor that can be returned from the query result
-      - `eventSeq`: (string): Event sequence.
-      - `txDigest`: (string): Transaction Digest.
-    - `limit` (number): Maximum number of items per page, default to 50 if not specified.
+### Query Wowok Events
+  Query on-chain event data.
+  Input Parameters:
+  - `type` (string, required): Event type (must be one of: 'OnNewArb', 'OnPresentService', 'OnNewProgress', 'OnNewOrder').
+  - `cursor` (object, optional): Paging cursor returned from previous query results, containing:
+    - `eventSeq` (string): Event sequence number.
+    - `txDigest` (string): Transaction digest.
+  - `limit` (number, optional): Maximum number of items to fetch per page (default: 50).
+  - `order` (string, optional): Result ordering ('ascending' or 'descending', default: 'ascending').    - `limit` (number): Maximum number of items per page, default to 50 if not specified.
     - `order` (string): 'ascending'(default), 'descending'
 
 - **permissions**   
@@ -155,7 +134,8 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
 
 - **guard_operations**   
   Operations on the wowok Guard object   
-  Input: *CallGuardDataSchema*
+  Input：*CallGuardDataSchema*
+
 
 - **demand_operations**   
   Operations on the wowok Demand object   
@@ -252,29 +232,57 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
   Query historical sessions data in the Progress object.   
   *wowok://table_item/progress/{?object, index}*
 
-- **treasury_table_item**   
-  Query historical flows data in the Treasury object.   
-  *wowok://table_item/treasury/{?object, index}*
+- **treasury_table_item**
+  Query historical flows data in the Treasury object.
+  Endpoint: *wowok://table_item/treasury/{?parent, index, no_cache}*
+  Parameters:
+  - `parent` (string, required): Address of the Treasury object that owns the table.
+  - `index` (number, required): Auto-incrementing index of the item to query (starts at 0).
+  - `no_cache` (boolean, optional): Whether to not use local cache data.
 
-- **service_table_item**   
-  Query the current information of the item for sale in the Service object.    
-  *wowok://table_item/service/{?object, name}*
+- **service_table_item**
+  Query the current information of the item for sale in the Service object.
+  Endpoint: *wowok://table_item/service/{?parent, name, no_cache}*
+  Parameters:
+  - `parent` (string, required): Address of the Service object that owns the table.
+  - `name` (string, required): Name of the item to query.
+  - `no_cache` (boolean, optional): Whether to not use local cache data.
 
-- **new_arb_events**   
-  Query node information in the Machine object.   
-  *wowok://table_item/repository/{?object, address, name}*
+- **new_arb_events**
+  Query node information in the Machine object.
+  Endpoint: *wowok://table_item/repository/{?parent, address, name, no_cache}*
+  Parameters:
+  - `parent` (string, required): Address of the Repository object that owns the table.
+  - `address` (string, required): Address of the node to query.
+  - `name` (string, required): Name of the node to query.
+  - `no_cache` (boolean, optional): Whether to not use local cache data.
 
-- **present_service_events**   
-  Query 'OnPresentService' events   
-  *wowok://events/OnPresentService/{?cursor_eventSeq, cursor_txDigest, limit, order}*
+- **present_service_events**
+  Query 'OnPresentService' events.
+  Endpoint: *wowok://events/OnPresentService/{?type, cursor, limit, order}*
+  Parameters:
+  - `type` (string, required): Event type (must be 'OnPresentService').
+  - `cursor` (object, optional): Paging cursor containing `eventSeq` (event sequence) and `txDigest` (transaction digest).
+  - `limit` (number, optional): Maximum number of items per page (default: 50).
+  - `order` (string, optional): Result ordering ('ascending' or 'descending', default: 'ascending').
 
-- **new_progress_events**   
-  Query 'OnNewProgress' events   
-  *wowok://events/OnNewProgress/{?cursor_eventSeq, cursor_txDigest, limit, order}*
+- **new_progress_events**
+  Query 'OnNewProgress' events.
+  Endpoint: *wowok://events/OnNewProgress/{?type, cursor, limit, order}*
+  Parameters:
+  - `type` (string, required): Event type (must be 'OnNewProgress').
+  - `cursor` (object, optional): Paging cursor containing `eventSeq` (event sequence) and `txDigest` (transaction digest).
+  - `limit` (number, optional): Maximum number of items per page (default: 50).
+  - `order` (string, optional): Result ordering ('ascending' or 'descending', default: 'ascending').
 
-- **new_order_events**   
-  Query 'OnNewOrder' events   
-  *wowok://events/OnNewOrder/{?cursor_eventSeq, cursor_txDigest, limit, order}*
+- **new_order_events**
+  Query 'OnNewOrder' events.
+  Endpoint: *wowok://events/OnNewOrder/{?type, cursor, limit, order}*
+  Parameters:
+  - `type` (string, required): Event type (must be 'OnNewOrder').
+  - `cursor` (object, optional): Paging cursor containing `eventSeq` (event sequence) and `txDigest` (transaction digest).
+  - `limit` (number, optional): Maximum number of items per page (default: 50).
+  - `order` (string, optional): Result ordering ('ascending' or 'descending', default: 'ascending').
 
 
 
