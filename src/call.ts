@@ -929,21 +929,25 @@ export const CallTreasurySchema = z.object({
     witness: WitnessSchema,
 }).describe(CallTreasurySchemaDescription);
 
-export const CallPermissionSchemaDescription = `Operate the on-chain Permission object using the local account signatures.`;
+export const CallPermissionSchemaDescription = `Operate the on-chain Permission object using the local account signatures.
+    The Permission object manages different permissions for various addresses. When its address is defined as the 'permission' field by objects such as Machine, Service, Arbitration, Treasury, Demand, and Repository, it governs and restricts all operators and their operational permissions for these objects.`;
 export const CallPermissionSchema = z.object({
     data:CallPermissionDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallPermissionSchemaDescription);
 
-export const CallArbitrationSchemaDescription = `Operate the on-chain Arbitration object using the local account signatures.`;
+export const CallArbitrationSchemaDescription = `Operate the on-chain Arbitration object using the local account signatures.
+    The Arbitration object handles disputes over orders through arbitration. When a purchaser questions the rights protection of an Order, they may submit evidence and claims to the Arbitration object supported by the Service, and obtain order compensation or other remedies based on the arbitration outcome. 
+    As a third-party entity, the Arbitration object conducts all dispute acceptance, voting, and arbitration results on-chain with full transparency. Prior to purchase, buyers can evaluate whether the Service supports their trusted Arbitration object to decide on purchasing goods or services.`;
 export const CallArbitrationSchema = z.object({
     data:CallArbitrationDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallArbitrationSchemaDescription);
 
-export const CallPersonalSchemaDescription = `Operate the on-chain Personal object using the local account signatures.`;
+export const CallPersonalSchemaDescription = `Operate the on-chain Personal object using the local account signatures.
+    The Personal object contains public information such as the user's homepage URL, social media accounts, avatar, likes and favorites, and object naming tags.`;
 export const CallPersonalSchema = z.object({
     data:CallPersonalDataSchema,
     account: AccountSchema,

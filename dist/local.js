@@ -22,8 +22,8 @@ export const AccountOperationSchema = z.object({
         suspend: z.boolean().optional().describe("Whether to suspend the account. If not specified, suspend the default account."),
     }).optional().describe("Suspend or reactivate the account."),
     name: z.object({
-        name: z.string().nonempty().describe("The name to set for the account."),
-        address: z.string().optional().describe("The address of the account. If not specified, the default account will be used."),
+        new_name: z.string().nonempty().describe("The name to set for the account."),
+        name_or_address: z.string().optional().describe("The name or address of the account to set the name for. undefined means default account."),
     }).optional().describe("Set the name of the account."),
     transfer: z.object({
         name_or_address_from: z.string().optional().describe("The name or address of the account to transfer from. undefined means default account."),
