@@ -3,16 +3,14 @@
 import { z } from "zod";
 import { BalanceOrCoin, LocalInfoNameDefault,  } from "wowok_agent";
 
-export const QueryAccountSchemaDescription = `Query the account address and its balance or coin objects.`;
+export const QueryAccountSchemaDescription = `Query local account information, including on-chain address, token balance, and list of token object addresses.`
 export const QueryAccountSchema = z.object({
     name_or_address: z.string().optional().describe("Your account name or address. undefined means default account."),
     balance_or_coin: z.nativeEnum(BalanceOrCoin).optional().describe("Query the balance or coin objects of the account."),
     token_type: z.string().optional().describe("Token type, default to 0x2::sui::SUI if not specified."),
 }).describe(QueryAccountSchemaDescription);
 
-export const AccountOperationSchemaDescription = `Account operation, such as generate a new account, set the default account, suspend or reactivate the account, set the name of the account or transfer tokens from one account to another. '
-    'Accounts are stored and managed locally on the device and provide necessary signatures for on-chain operations to ensure their successful execution.'
-    'The operations are performed one after the other in the field order.`;
+export const AccountOperationSchemaDescription = `Account operations, including generating new accounts, setting default accounts, suspending/reactivating accounts, naming accounts, and transferring tokens between accounts.`;
 export const AccountOperationSchema = z.object({
     gen: z.object({
             name: z.string().nonempty().optional().describe("Account name."),
@@ -37,8 +35,8 @@ export const AccountOperationSchema = z.object({
         }).optional().describe("Transfer tokens from one account to another."),        
 }).describe(AccountOperationSchemaDescription);
 
-export const LocalMarkOperationSchemaDescription = `Local mark operation, such as add or set local marks, remove local marks or remove all local marks.
-    Local mark enables faster object address management and querying through the name and its tags.`;   
+export const LocalMarkOperationSchemaDescription = `Local mark operations facilitate efficient object address management by assigning names and tags to addresses, enabling faster querying and organization. 
+Supported operations include adding/setting marks (with optional names and tags), removing specific tags, and removing all marks for addresses.`
 export const LocalMarkOperationSchema = z.object({
     data: z.union([
         z.object({op:z.literal('removeall')}).describe("Remove all local marks."),
@@ -52,8 +50,7 @@ export const LocalMarkOperationSchema = z.object({
     ])
 }).describe(LocalMarkOperationSchemaDescription);
 
-export const LocalInfoOperationSchemaDescription = `Local info operation, such as add local info or remove local info.
-    Local info allows storing personal information (e.g. addresses, phone numbers) on-device, which can be cryptographically processed and shared with service providers.`; 
+export const LocalInfoOperationSchemaDescription = `Local info operations manage on-device storage of personal information (e.g., delivery addresses, phone numbers) for cryptographic processing and secure sharing with service providers. Supported operations include: adding info (requires name and content parameters), removing specific info entries by name, and updating existing entries with new content.`
 export const LocalInfoOperationSchema = z.object({
     data: z.union([
         z.object({
@@ -74,7 +71,7 @@ export const LocalInfoOperationSchema = z.object({
     ])
 }).describe(LocalInfoOperationSchemaDescription);
 
-export const QueryLocalMarkSchemaDescription = `Query local mark by name. Local mark enables faster object address management and querying through the name and its tags.`; 
+export const QueryLocalMarkSchemaDescription = `Query local mark by name. Accepts a local mark name (string) as input, and returns an object containing: address (on-chain object address), name (assigned human-readable name), and tags (array of string tags). Local marks enable faster address management by mapping addresses to memorable names and categorized tags for efficient querying.`; 
 export const QueryLocalMarkSchema = z.object({
     name: z.string().describe("The name of the local mark."),
 }).describe(QueryLocalMarkSchemaDescription);
@@ -84,23 +81,18 @@ export const QueryLocalInfoSchema = z.object({
     name: z.string().default(LocalInfoNameDefault).describe("The name of the local info."),
 }).describe(QueryLocalInfoSchemaDescription);
 
-export const LocalMarkFilterSchemaDescription = `Filter local marks by name, tags or object address. Local mark enables faster object address management and querying through the name and its tags.`;
+export const LocalMarkFilterSchemaDescription = `Filter local marks by optional criteria: name (string), tags (array of strings), or object address (string). Parameters can be used individually or in combination for precise queries. Returns an array of local mark objects, each containing: address (on-chain object address), name (human-readable name), and tags (categorical tags). Local marks enhance address management efficiency through flexible multi-condition filtering.`; 
 export const LocalMarkFilterSchema = z.object({
     name: z.string().optional().describe("The name of the local mark."),
     tags: z.array(z.string()).optional().describe("The tags of the local mark."),
-    object: z.string().optional().describe("The object address of the local mark."),
+    address: z.string().optional().describe("The object or address of the local mark."),
 }).describe(LocalMarkFilterSchemaDescription);
 
-export const LocalMarkListSchemaDescription = `List local marks. Local mark enables faster object address management and querying through the name and its tags.`;
-export const LocalMarkListSchema = z.object({
-}).describe(LocalMarkListSchemaDescription);
-
-export const LocalInfoListSchemaDescription = `List local informations. Local info allows storing personal information (e.g. addresses, phone numbers) on-device, which can be cryptographically processed and shared with service providers.`; 
+export const LocalInfoListSchemaDescription = `List local information entries. Local info enables on-device storage of personal data (e.g., addresses, phone numbers) structured as name-content pairs, supporting cryptographic processing and secure sharing with service providers.`; 
 export const LocalInfoListSchema = z.object({
 }).describe(LocalInfoListSchemaDescription);
 
-export const AccountListSchemaDescription = `List accounts. If showSuspendedAccount is true, suspended accounts will be displayed.
-    Accounts are stored and managed locally on the device and provide necessary signatures for on-chain operations to ensure their successful execution.`;  
+export const AccountListSchemaDescription = `List local accounts stored on the device. Accounts provide cryptographic signatures for on-chain operations and support management/operation of their owned on-chain objects and funds. If showSuspendedAccount is set to true (default: false), suspended accounts will be included in the result.`; 
 export const AccountListSchema = z.object({
     showSuspendedAccount: z.boolean().optional().default(false).describe("Whether to display suspended accounts."),
 }).describe(AccountListSchemaDescription);

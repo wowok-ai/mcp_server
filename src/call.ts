@@ -764,7 +764,7 @@ export const CallServiceDataSchema = z.object({
         guard: z.string().optional().describe('Specify the Guard to validate. If not specified, the Settings are automatically fetched from the chain.'),
         namedNewOrder:NamedObjectSchema.optional().describe('Newly named Order object.'),
         namedNewProgress: NamedObjectSchema.optional().describe('Newly named Progress object.'),
-    }).optional().describe('Create a new order.'),
+    }).optional().describe('Purchase products/services, complete payment to generate an Order.'),
     order_agent: z.object({
         order: z.string().optional().describe('The address of the Order object.' + 
             'If undefined, the newly created Order object in the current transaction is used.'
@@ -829,7 +829,6 @@ export const CallServiceDataSchema = z.object({
 }).describe('Data definition that operates on the on-chain Service object. The operations are performed one after the other in the field order.'); 
 
 export const CallPersonalDataSchema = z.object({
-    mark_object: CallObjectSchema.optional().describe('Modify the existing PersonalMark object or build a new one.'),
     information: z.object({
         name: z.string().describe('The name of the personal.'),
         description: z.string().optional().describe('Personal introduction.'),
@@ -837,7 +836,7 @@ export const CallPersonalDataSchema = z.object({
         twitter: z.string().optional().describe('Personal twitter.'),
         discord: z.string().optional().describe('Personal discord.'),
         homepage: z.string().optional().describe('Personal homepage.'),
-    }).optional().describe('Personal social information'),
+    }).optional().describe('Personal social information. including name, description, avatar, twitter, discord, and homepage.'),
     mark: z.union([
         z.object({
             op: z.literal('add'),
@@ -869,12 +868,12 @@ export const CallPersonalDataSchema = z.object({
         z.object({
             op: z.literal('destroy'),
         }).describe('Delete all marked addresses information, and destory the current Resource object.'),
-    ]).optional().describe('Naming and management of personal marks(Resource object).')
+    ]).optional().describe('Naming and management of personal marks for addresses.'),
 }).describe('Data definition that operates on the on-chain Personal object. The operations are performed one after the other in the field order.'); 
 
 export const CallObjectPermissionDataSchema = z.object({
-    objects: z.array(z.string().nonempty().describe('The address of the wowok object.')),
-    new_permission: z.string().nonempty().describe('The address of the Permission object that Replaces the original Permission object.')
+    objects: z.array(z.string().nonempty().describe('The names or addresses of the wowok objects.')),
+    new_permission: z.string().nonempty().describe('The name or address of the Permission object that Replaces the original Permission object.')
 }).describe('Batch modify the on-chain Permission object of wowok objects.' + 
     'Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.' 
 );
@@ -894,75 +893,103 @@ export const GuardWitness = z.object({
 export const AccountSchema = z.string().optional().nullable().describe('The account name or address that initiated the operation.');
 export const WitnessSchema = GuardWitness.optional().nullable().describe('If Guard sets witness data, it needs to be provided immediately by the transaction signer when Guard is verified.');
 
-export const CallDemandSchemaDescription = `Operate the on-chain Demand object using the local account signatures.`;
+export const CallDemandSchemaDescription = `Operate the on-chain Demand object using the local account signatures.
+The Demand object is an on-chain service requirement manager, enabling users to publish, modify, or cancel service demands via local account signatures. Core functions include defining demand types (e.g., logistics, medical consultation), setting parameters (e.g., location, symptom details), specifying execution conditions, tracking status, and assigning rewards to preferred service referrers.
+Scenarios :
+- Logistics : A user publishes a logistics demand with pickup/dropoff details, and sets a reward for referrers who recommend qualified delivery companies.
+- Medical Consultation : A patient creates a demand for specialist consultation, including rewards for referrers who suggest verified clinics.
+Key Details :
+
+- Operated via local account signatures to ensure ownership.
+- Structured fields (type, parameters, deadline, status) enable automated service matching.
+- Supports lifecycle management (update, fulfill) and reward assignment to incentivize quality referrals.`; 
 export const CallDemandSchema = z.object({
     data:CallDemandDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallDemandSchemaDescription);
 
-export const CallRepositorySchemaDescription = `Operate the on-chain Repository object using the local account signatures.`;
+export const CallRepositorySchemaDescription = `Operate the on-chain Repository object using the local account signatures.
+The Repository serves as an on-chain data warehouse, storing and managing consensus data items retrievable and maintained via a dual identifier system: an address (physical locator) and a policy (semantic name defined by multi-party consensus). It can be referenced by Guards for data validation—e.g., verifying an address's medical data in a named medical Repository to release insurance payouts from a Treasury, or using daily weather data from a named weather Repository to adjust service workflows (e.g., sport recommendations). Permissions can be flexibly configured per policy to enhance data comprehension, adoption, and maintenance.`;
 export const CallRepositorySchema = z.object({
     data:CallRepositoryDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallRepositorySchemaDescription);
 
-export const CallMachineSchemaDescription = `Operate the on-chain Machine object using the local account signatures.`;
+export const CallMachineSchemaDescription = `Operate the on-chain Machine object using the local account signatures. 
+    The Machine object is a core workflow management entity in the wowok protocol, designed to enable multi-user collaboration by providing three key capabilities: 
+    1. **Process Orchestration**: Define multi-stage service execution flows (e.g., requirement confirmation → development → testing → acceptance) with clear step sequences and triggers, ensuring collaborative tasks proceed in a structured manner. 
+    2. **Permission Governance**: Assign granular operation permissions to participating roles (e.g., only service providers can execute development steps; only purchasers can approve acceptance steps), preventing unauthorized modifications to the workflow. 
+    3. **Delivery Verification**: Configure automatic validation rules via Guard conditions (e.g., verifying that deliverable hashes match predefined values or that timestamps meet deadlines), ensuring objective assessment of task completion. 
+    When integrated with Service objects, Machine enforces binding constraints on service providers and payers: service providers define the collaborative process, permissions, and verification rules in the Machine when publishing services. Once a purchaser places an order, these rules are immutably recorded on-chain, ensuring both parties' commitments are enforced programmatically without arbitrary changes, thereby maintaining trust in service execution.`;
 export const CallMachineSchema = z.object({
     data:CallMachineDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallMachineSchemaDescription);
 
-export const CallServiceSchemaDescription = `Operate the on-chain Service object using the local account signatures.`;
+export const CallServiceSchemaDescription = `Operate the on-chain Service object using the local account signatures.
+    Service Object enables service providers to:
+        Provide products/services (including descriptions, interfaces, pricing, inventory, etc.),
+        Define service processes,
+        Specify arbitration commitments,
+        Establish payment collection and refund commitments,
+        Configure order incentives/rewards,
+        Set purchaser requirements, etc..
+        And the Process and delivery commitments cannot be arbitrarily modified post-purchase. 
+        Through the Service Object, a purchaser's procurement and payment for services triggers the creation of a new Order instance, where the Order entity is contractually vested with the corresponding service entitlements.`;
 export const CallServiceSchema = z.object({
     data:CallServiceDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallServiceSchemaDescription);
 
-export const CallTreasurySchemaDescription = `Operate the on-chain Treasury object using the local account signatures.`;
+export const CallTreasurySchemaDescription = `Operate the on-chain Treasury object using the local account signatures. The Treasury object serves as a centralized fund management hub for wowok protocol, supporting multi-scenario financial operations including service incentives distribution, dispute compensation execution, and operational reward disbursement.
+- **Service Reward Mode**: Automatically disburses predefined incentives to service providers via smart contract triggers upon successful completion of service orders (e.g., e-commerce transaction fulfillment, travel service delivery).
+- **Dispute Compensation Mode**: Executes compensation payments to order payers based on valid Arbitration results, ensuring timely fund transfer as ruled by the arbitration panel within 24 hours of result confirmation.
+- **Operational Reward Mode**: Provides Guard-based fund withdrawal mechanisms for different operational personnel, with predefined withdrawal limits. For example, after completing a computational task, if the submitted result data meets the on-chain verification requirements (via Guard conditions), the operator can withdraw a designated reward amount up to the set limit.
+
+All operations (deposit, withdrawal, transfer) are governed by the associated Permission object, ensuring authorized access and compliant fund flows. All transaction records are permanently stored on-chain for full transparency.`
 export const CallTreasurySchema = z.object({
     data:CallTreasuryDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallTreasurySchemaDescription);
 
-export const CallPermissionSchemaDescription = `Operate the on-chain Permission object using the local account signatures.
-    The Permission object manages different permissions for various addresses. When its address is defined as the 'permission' field by objects such as Machine, Service, Arbitration, Treasury, Demand, and Repository, it governs and restricts all operators and their operational permissions for these objects.`;
+export const CallPermissionSchemaDescription = `Operate the on-chain Permission object using the local account signatures. The Permission object is designed to manage access control for core wowok protocol entities (e.g., Machine, Service, Repository, Treasury). It defines granular operation permissions (e.g., read, write, management) for specific entities or addresses, ensuring only authorized subjects can perform designated actions on the associated on-chain objects (such as data modification, fund transfer, or configuration updates). This mechanism safeguards the security and compliance of protocol resource operations.`
 export const CallPermissionSchema = z.object({
     data:CallPermissionDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallPermissionSchemaDescription);
 
-export const CallArbitrationSchemaDescription = `Operate the on-chain Arbitration object using the local account signatures.
-    The Arbitration object handles disputes over orders through arbitration. When a purchaser questions the rights protection of an Order, they may submit evidence and claims to the Arbitration object supported by the Service, and obtain order compensation or other remedies based on the arbitration outcome. 
-    As a third-party entity, the Arbitration object conducts all dispute acceptance, voting, and arbitration results on-chain with full transparency. Prior to purchase, buyers can evaluate whether the Service supports their trusted Arbitration object to decide on purchasing goods or services.`;
+export const CallArbitrationSchemaDescription = `Operate the on-chain Arbitration object using the local account signatures. 
+The Arbitration object is designed to handle order disputes, particularly those involving off-chain data, evidence, and proofs. A public arbitration panel reviews the dispute, votes, and determines the compensation amount. If the order's Service object declares support for this Arbitration, the determined compensation amount allows the order payer to immediately withdraw funds from the order.
+The arbitration process and results are stored as on-chain data, which may be referenced as Guard conditions to grant the order payer additional rights, such as obtaining additional incentives or compensation commitments from the Treasury for the Service.`;
 export const CallArbitrationSchema = z.object({
     data:CallArbitrationDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
 }).describe(CallArbitrationSchemaDescription);
 
-export const CallPersonalSchemaDescription = `Operate the on-chain Personal object using the local account signatures.
-    The Personal object contains public information such as the user's homepage URL, social media accounts, avatar, likes and favorites, and object naming tags.`;
+export const CallPersonalSchemaDescription = `Operate the on-chain Personal object using local account signatures, including managing public personal information (e.g., avatar URL, personal homepage address, social media accounts like Twitter/Discord, personal introduction) and named tags for addresses/wowok entity objects. The tag management facilitates self/others to understand and manage these addresses/entities, and supports operations such as liking (favoriting) or disliking specific addresses/entity objects.`;
 export const CallPersonalSchema = z.object({
     data:CallPersonalDataSchema,
     account: AccountSchema,
 }).describe(CallPersonalSchemaDescription);
 
-export const CallGuardSchemaDescription = `Operate the on-chain Guard object using the local account signatures.`;
+export const CallGuardSchemaDescription = `Generate the on-chain Guard object using local account signatures. Guard is designed for conditional verification before critical on-chain operations (e.g., time-based triggers or process completion checks), leveraging Wowok's tools for querying/verifying on-chain data (including entity object content, table data, and oracle inputs).
+Distinct from Permission, Guard provides finer-grained and more flexible permission validation. Once generated, its verification logic is immutable and publicly auditable, enabling reuse across various Wowok object operations.
+During transaction submission requiring Guard verification, validation executes directly within the transaction using on-chain data or prover-provided evidence. Failed verification aborts the transaction; success allows execution.`;
 export const CallGuardSchema = z.object({
     data:CallGuardDataSchema,
     account: AccountSchema,
 }).describe(CallGuardSchemaDescription);
 
-export const CallObejctPermissionSchemaDescription = `Batch modify the on-chain Permission object of wowok objects using the local account signatures.
-    Transaction signers need to be the owner of the original Permission object in these wowok objects in order to succeed.`;
+export const CallObejctPermissionSchemaDescription = `Batch replace on-chain Permission objects for core wowok protocol entities (Machine, Service, Repository, Treasury, Arbitration, Demand) using local account cryptographic signatures. This operation facilitates centralized access control management by replacing existing Permission objects with new ones, which define granular access rules (e.g., read/write permissions, operation authorizations) for these entity types. Transaction validity requires signers to be the original owners of the target Permission objects, ensuring alignment with wowok protocol's ownership verification mechanism.`; 
 export const CallObejctPermissionSchema = z.object({
     data:CallObjectPermissionDataSchema,
     account: AccountSchema,
     witness: WitnessSchema,
-}).describe(CallObejctPermissionSchemaDescription);  
+}).describe(CallObejctPermissionSchemaDescription);

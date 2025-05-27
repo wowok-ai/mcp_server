@@ -1,7 +1,9 @@
 
 import { z } from "zod";
 
-export const QueryObjectsSchemaDescription = `Query the on-chain data of a wowok object.`;
+export const QueryObjectsSchemaDescription = `Query the on-chain data of specified wowok objects. 
+Input parameters include an array of object addresses and a no-cache flag (to bypass local cache). 
+Returns detailed on-chain content data(excluding table data) for each queried object, enabling accurate and up-to-date data retrieval`;
 export const QueryObjectsSchema = z.object({
     objects: z.array(z.string()).describe("Wowok object addresses."),
     no_cache: z.boolean().optional().describe("Whether to not use local cache data."),
@@ -45,7 +47,7 @@ export const EventCursorSchema = z.object({
     txDigest: z.string().describe('Transaction Digest.'),
 }).describe('Event retrieval cursor');
 
-export const QueryEventSchemaDescription = `Query the on-chain event data.`;
+export const QueryEventSchemaDescription = `Retrieves paginated on-chain event data using an optional cursor, including event type, timestamp, transaction digest, and associated entity details. Supports no-cache flag for fresh data retrieval.`;
 export const QueryEventSchema = z.object({
     type: z.enum(['OnNewArb', 'OnPresentService', 'OnNewProgress', 'OnNewOrder']).describe("Type of Events: OnNewArb, OnPresentService, OnNewProgress, OnNewOrder"),
     cursor: EventCursorSchema.optional().nullable().describe('Paging cursor.'),

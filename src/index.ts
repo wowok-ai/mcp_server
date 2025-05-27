@@ -28,35 +28,35 @@ import { CallArbitrationSchema, CallArbitrationSchemaDescription, CallDemandSche
     CallTreasurySchemaDescription,
  } from "./call.js";
 import { parseUrlParams } from "./util.js"; 
-import { AccountListSchemaDescription, AccountListSchema, AccountOperationSchema, LocalInfoListSchema, LocalInfoListSchemaDescription, LocalInfoOperationSchema, LocalMarkFilterSchema, LocalMarkFilterSchemaDescription, LocalMarkListSchema, LocalMarkListSchemaDescription, LocalMarkOperationSchema, QueryAccountSchema, QueryAccountSchemaDescription, QueryLocalInfoSchema, QueryLocalInfoSchemaDescription, QueryLocalMarkSchema, QueryLocalMarkSchemaDescription, AccountOperationSchemaDescription, LocalInfoOperationSchemaDescription, LocalMarkOperationSchemaDescription } from "./local.js";
+import { AccountListSchemaDescription, AccountListSchema, AccountOperationSchema, LocalInfoListSchema, LocalInfoListSchemaDescription, LocalInfoOperationSchema, LocalMarkFilterSchema, LocalMarkFilterSchemaDescription, 
+    LocalMarkOperationSchema, QueryAccountSchema, QueryAccountSchemaDescription, QueryLocalInfoSchema, QueryLocalInfoSchemaDescription, QueryLocalMarkSchema, QueryLocalMarkSchemaDescription, AccountOperationSchemaDescription, LocalInfoOperationSchemaDescription, LocalMarkOperationSchemaDescription } from "./local.js";
 
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 type ToolInput = z.infer<typeof ToolInputSchema>;
 
 export enum ToolName {
-    QUERY_OBJECTS = 'objects',
-    QUERY_EVENTS = 'events',
-    QUERY_PERMISSIONS = 'permissions',
-    QUERY_TABLE_ITEMS = 'table_items', 
+    QUERY_OBJECTS = 'objects_query',
+    QUERY_EVENTS = 'events_query',
+    QUERY_PERMISSIONS = 'permissions_query',
+    QUERY_TABLE_ITEMS = 'table_items_query', 
     //QUERY_TABLE_ITEM = 'table_item',
-    QUERY_PERSONAL = 'presonal_information',
-    QUERY_ARB_VOTING = 'arb_table_item',
-    QUERY_DEMAND_SERVICE = 'demand_table_item',
-    QUERY_PERMISSION_ENTITY = 'permission_table_item',
-    QUERY_MACHINE_NODE = 'machine_table_item',
-    QUERY_SERVICE_SALE = 'service_table_item',
-    QUERY_PROGRESS_HISTORY = 'progress_table_item',
-    QUERY_TREASURY_HISTORY = 'treasury_table_item',
-    QUERY_REPOSITORY_DATA = 'repository_table_item',
-    QUERY_MARK_TAGS = 'personalmark_table_item',
-    QUERY_LOCAL_MARK_LIST = 'local_mark_list',
-    QUERY_LOCAL_MARK_FILTER = 'local_mark_filter',
-    QUERY_LOCAL_INFO_LIST = 'local_info_list',
-    QUERY_ACCOUNT_LIST = 'local_account_list',
-    QUERY_LOCAL_MARK = 'local_mark',
-    QUERY_LOCAL_INFO = 'local_info',
-    QUERY_ACCOUNT = 'local_account',
+    QUERY_PERSONAL = 'presonal_information_query',
+    QUERY_ARB_VOTING = 'arb_table_item_query',
+    QUERY_DEMAND_SERVICE = 'demand_table_item_query',
+    QUERY_PERMISSION_ENTITY = 'permission_table_item_query',
+    QUERY_MACHINE_NODE = 'machine_table_item_query',
+    QUERY_SERVICE_SALE = 'service_table_item_query',
+    QUERY_PROGRESS_HISTORY = 'progress_table_item_query',
+    QUERY_TREASURY_HISTORY = 'treasury_table_item_query',
+    QUERY_REPOSITORY_DATA = 'repository_table_item_query',
+    QUERY_MARK_TAGS = 'personalmark_table_item_query',
+    QUERY_LOCAL_MARK_LIST = 'local_mark_list_query',
+    QUERY_LOCAL_INFO_LIST = 'local_info_list_query',
+    QUERY_ACCOUNT_LIST = 'local_account_list_query',
+    QUERY_LOCAL_MARK = 'local_mark_query',
+    QUERY_LOCAL_INFO = 'local_info_query',
+    QUERY_ACCOUNT = 'local_account_query',
     OP_PERSONAL = 'onchain_personal_operations',
     OP_MACHINE = 'onchain_machine_operations',
     OP_SERVICE = 'onchain_service_operations',
@@ -83,12 +83,15 @@ WOWOK.Protocol.Instance().use_network(WOWOK.ENTRYPOINT.testnet);
 // Create server instance
 const server = new Server({
     name: "wowok",
-    version: "1.1.12",
+    version: "1.1.14",
+    description: `WoWok is a web3 collaboration protocol that enables users to create, collaborate, and transact on their own terms. It provides a set of tools and services that allow users to build and manage their own decentralized applications (dApps) and smart contracts.
+    This server provides a set of tools and resources for querying and managing on-chain objects, events, and permissions in the WoWok protocol. It allows users to interact with the blockchain and perform various operations such as querying objects, events, permissions, and personal information, as well as performing on-chain operations like creating or updating objects, managing permissions, and more.
+    It also provides local operations for managing your accounts and personal marks and information, allowing users to store and retrieve personal data securely on their devices.`,
   },{
     capabilities: {
-      prompts: {},
-      resources: { subscribe: true },
-      tools: {},
+      prompts: { },
+      resources: {},
+      tools: { },
       logging: {},
     },
 },);
@@ -98,12 +101,6 @@ const RESOURCES: Resource[] = [
         uri: 'wowok://account/list',
         name: ToolName.QUERY_ACCOUNT_LIST,
         description: AccountListSchemaDescription,
-        mimeType:'text/plain'
-    },
-    {
-        uri: 'wowok://local_mark/list',
-        name: ToolName.QUERY_LOCAL_MARK_LIST,
-        description: LocalMarkListSchemaDescription,
         mimeType:'text/plain'
     },
     {
@@ -196,25 +193,25 @@ const RESOURCES_TEMPL: ResourceTemplate[] = [
     {
         uriTemplate: 'wowok://events/onNewArb/{?cursor_eventSeq, cursor_txDigest, limit, order}',
         name: EventName.new_arb,
-        description: "Query the on-chain 'onNewArb' events",
+        description: "Query the on-chain 'onNewArb' events. When an Order buyer files a complaint to Arbitration, An 'onNewArb' event notification is triggered on the blockchain.",
         mimeType:'text/plain'
     },
     {
         uriTemplate: 'wowok://events/OnPresentService/{?cursor_eventSeq, cursor_txDigest, limit, order}',
         name: EventName.present_service,
-        description: "Query the on-chain 'OnPresentService' events",
+        description: "Query the on-chain 'OnPresentService' events. When a recommender completes a Service recommendation to the Demand object, An 'OnPresentService' event notification is triggered on the blockchain.",
         mimeType:'text/plain'
     },
     {
         uriTemplate: 'wowok://events/OnNewProgress/{?cursor_eventSeq, cursor_txDigest, limit, order}',
         name: EventName.new_progress,
-        description: "Query the on-chain 'OnNewProgress' events",
+        description: "Query the on-chain 'OnNewProgress' events. When the Machine generates and completes a new Progress, An 'OnNewProgress' event notification is triggered on the blockchain.",
         mimeType:'text/plain'
     },
     {
         uriTemplate: 'wowok://events/OnNewOrder/{?cursor_eventSeq, cursor_txDigest, limit, order}',
         name: EventName.new_order,
-        description: "Query the on-chain 'OnNewOrder' events",
+        description: "Query the on-chain 'OnNewOrder' events. When the Service generates and completes a new Order, An 'OnNewOrder' event notification is triggered on the blockchain.",
         mimeType:'text/plain'
     },
     {
@@ -237,7 +234,7 @@ const RESOURCES_TEMPL: ResourceTemplate[] = [
     },
     {
         uriTemplate: 'wowok://local_mark/filter/{?name, tags*, object}',
-        name: ToolName.QUERY_LOCAL_MARK_FILTER,
+        name: ToolName.QUERY_LOCAL_MARK_LIST,
         description: LocalMarkFilterSchemaDescription,
         mimeType:'text/plain'
     },

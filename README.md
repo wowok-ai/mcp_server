@@ -1,5 +1,5 @@
 # wowok_mcp (MCP Server for WoWok)
-Unlock Co-Creation: Right Talent, Perfect Purpose.
+Unlock Co-Creation, Lighting Transaction, Empower Potential.
 
 Github: [https://github.com/wowok-ai/wowok](https://github.com/wowok-ai/wowok)   
 Wowok Agent for AI: [https://github.com/wowok-ai/wowok_agent](https://github.com/wowok-ai/wowok_agent)   
@@ -113,7 +113,15 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
   Input: *CallMachineDataSchema*
 
 - **service_operations**   
-  Operations on the wowok Service object   
+  Operations on the wowok Service object. Service Object enables service providers to:
+    Provide products/services (including descriptions, interfaces, pricing, inventory, etc.),
+    Define service processes,
+    Specify arbitration commitments,
+    Establish payment collection and refund commitments,
+    Configure order incentives/rewards,
+    Set purchaser requirements, etc..
+    And the Process and delivery commitments cannot be arbitrarily modified post-purchase. 
+  Through the Service Object, a purchaser's procurement and payment for services triggers the creation of a new Order instance, where the Order entity is contractually vested with the corresponding service entitlements.
   Input: *CallServiceDataSchema*
 
 - **permission_operations**    
@@ -249,7 +257,7 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
   - `no_cache` (boolean, optional): Whether to not use local cache data.
 
 - **new_arb_events**
-  Query node information in the Machine object.
+  Query the on-chain 'onNewArb' events. When an Order buyer files a complaint to Arbitration, An 'onNewArb' event notification is triggered on the blockchain.
   Endpoint: *wowok://table_item/repository/{?parent, address, name, no_cache}*
   Parameters:
   - `parent` (string, required): Address of the Repository object that owns the table.
@@ -258,7 +266,7 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
   - `no_cache` (boolean, optional): Whether to not use local cache data.
 
 - **present_service_events**
-  Query 'OnPresentService' events.
+  Query the on-chain 'OnPresentService' events. When a recommender completes a Service recommendation to the Demand object, An 'OnPresentService' event notification is triggered on the blockchain.
   Endpoint: *wowok://events/OnPresentService/{?type, cursor, limit, order}*
   Parameters:
   - `type` (string, required): Event type (must be 'OnPresentService').
@@ -267,7 +275,7 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
   - `order` (string, optional): Result ordering ('ascending' or 'descending', default: 'ascending').
 
 - **new_progress_events**
-  Query 'OnNewProgress' events.
+  Query the on-chain 'OnNewProgress' events. When the Machine generates and completes a new Progress, An 'OnNewProgress' event notification is triggered on the blockchain.
   Endpoint: *wowok://events/OnNewProgress/{?type, cursor, limit, order}*
   Parameters:
   - `type` (string, required): Event type (must be 'OnNewProgress').
@@ -276,7 +284,7 @@ X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
   - `order` (string, optional): Result ordering ('ascending' or 'descending', default: 'ascending').
 
 - **new_order_events**
-  Query 'OnNewOrder' events.
+  Query the on-chain 'OnNewOrder' events. When the Service generates and completes a new Order, An 'OnNewOrder' event notification is triggered on the blockchain.
   Endpoint: *wowok://events/OnNewOrder/{?type, cursor, limit, order}*
   Parameters:
   - `type` (string, required): Event type (must be 'OnNewOrder').
