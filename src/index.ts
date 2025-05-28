@@ -16,11 +16,17 @@ import { query_objects, WOWOK, query_events, query_permission, query_table, call
   } from 'wowok_agent';
 import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryTableItemSchema, 
   QueryByAddressNameSchema, QueryByIndexSchema, QueryByNameSchema, QueryByAddressSchema,
-  QueryObjectsSchemaDescription,
-  QueryPermissionSchemaDescription,
-  QueryPersonalSchemaDescription,
-  QueryEventSchemaDescription,
-  QueryTableItemsSchemaDescription,
+  QueryObjectsSchemaDescription, QueryPermissionSchemaDescription, QueryPersonalSchemaDescription, QueryEventSchemaDescription,
+  Demand_TableItems_List_Description, Arb_TableItems_List_Description, Machine_TableItems_List_Description,
+  PersonalMark_TableItems_List_Description, Permission_TableItems_List_Description, Repository_TableItems_List_Description,
+  Progress_TableItems_List_Description, Treasury_TableItems_List_Description, Service_TableItems_List_Description,
+  QueryDemandTableItemsSchema, QueryArbTableItemsSchema, QueryMachineTableItemsSchema,
+  QueryServiceTableItemsSchema, QueryProgressTableItemsSchema, QueryRepositoryTableItemsSchema,
+  QueryTreasuryTableItemsSchema, QueryPersonalMarkTableItemsSchema, QueryPermissionTableItemsSchema,
+  Query_TableItems_List_Description, Arb_TableItem_Description, Demand_TableItem_Description,
+  Machine_TableItem_Description, PersonalMark_TableItem_Description, Permission_TableItem_Description,
+  Repository_TableItem_Description, Progress_TableItem_Description, Service_TableItem_Description,
+  Treasury_TableItem_Description,
 } from './query.js';
 import { CallArbitrationSchema, CallArbitrationSchemaDescription, CallDemandSchema, CallDemandSchemaDescription, CallGuardSchema, CallGuardSchemaDescription, CallMachineSchema, CallMachineSchemaDescription, CallObejctPermissionSchema,
     CallObejctPermissionSchemaDescription,
@@ -39,21 +45,10 @@ export enum ToolName {
     QUERY_OBJECTS = 'objects_query',
     QUERY_EVENTS = 'events_query',
     QUERY_PERMISSIONS = 'permissions_query',
-    QUERY_TABLE_ITEMS = 'table_items_query', 
-    //QUERY_TABLE_ITEM = 'table_item',
     QUERY_PERSONAL = 'presonal_information_query',
-    QUERY_ARB_VOTING = 'arb_table_item_query',
-    QUERY_DEMAND_SERVICE = 'demand_table_item_query',
-    QUERY_PERMISSION_ENTITY = 'permission_table_item_query',
-    QUERY_MACHINE_NODE = 'machine_table_item_query',
-    QUERY_SERVICE_SALE = 'service_table_item_query',
-    QUERY_PROGRESS_HISTORY = 'progress_table_item_query',
-    QUERY_TREASURY_HISTORY = 'treasury_table_item_query',
-    QUERY_REPOSITORY_DATA = 'repository_table_item_query',
-    QUERY_MARK_TAGS = 'personalmark_table_item_query',
-    QUERY_LOCAL_MARK_LIST = 'local_mark_list_query',
-    QUERY_LOCAL_INFO_LIST = 'local_info_list_query',
-    QUERY_ACCOUNT_LIST = 'local_account_list_query',
+    QUERY_LOCAL_MARK_LIST = 'local_marks_list',
+    QUERY_LOCAL_INFO_LIST = 'local_information_list',
+    QUERY_ACCOUNT_LIST = 'local_accounts_list',
     QUERY_LOCAL_MARK = 'local_mark_query',
     QUERY_LOCAL_INFO = 'local_info_query',
     QUERY_ACCOUNT = 'local_account_query',
@@ -70,13 +65,25 @@ export enum ToolName {
     OP_ACCOUNT = 'local_account_operations',
     OP_LOCAL_MARK = 'local_mark_operations',
     OP_LOCAL_INFO = 'local_info_operations',
-}
-
-export enum EventName {
-    new_arb = 'new_arb_events',
-    new_progress = 'new_progress_events',
-    new_order = 'new_order_events',
-    present_service = 'present_service_events'
+    QUERY_TABLE_ITEMS_LIST = 'onchain_table_items_query', 
+    QUERY_ARB_VOTING_LIST = 'onchain_arb_table_items_list',
+    QUERY_DEMAND_SERVICE_LIST = 'onchain_demand_table_items_list',
+    QUERY_PERMISSION_ENTITY_LIST = 'onchain_permission_table_items_list',
+    QUERY_MACHINE_NODE_LIST = 'onchain_machine_table_items_list',
+    QUERY_SERVICE_SALE_LIST = 'onchain_service_table_items_list',
+    QUERY_PROGRESS_HISTORY_LIST = 'onchain_progress_table_items_list',
+    QUERY_TREASURY_HISTORY_LIST = 'onchain_treasury_table_items_list',
+    QUERY_REPOSITORY_DATA_LIST = 'onchain_repository_table_items_list',
+    QUERY_PERSONAL_MARK_LIST = 'onchain_personalmark_table_items_list',
+    QUERY_ARB_VOTING = 'onchain_arb_table_item_query',
+    QUERY_DEMAND_SERVICE = 'onchain_demand_table_item_query',
+    QUERY_PERMISSION_ENTITY = 'onchain_permission_table_item_query',
+    QUERY_MACHINE_NODE = 'onchain_machine_table_item_query',
+    QUERY_SERVICE_SALE = 'onchain_service_table_item_query',
+    QUERY_PROGRESS_HISTORY = 'onchain_progress_table_item_query',
+    QUERY_TREASURY_HISTORY = 'onchain_treasury_table_item_query',
+    QUERY_REPOSITORY_DATA = 'onchain_repository_table_item_query',
+    QUERY_PERSONAL_MARK = 'onchain_personalmark_table_item_query',
 }
 
 WOWOK.Protocol.Instance().use_network(WOWOK.ENTRYPOINT.testnet);
@@ -131,87 +138,123 @@ const RESOURCES_TEMPL: ResourceTemplate[] = [
         mimeType:'text/plain'
     },
     {
-        uriTemplate: 'wowok://table_items/{?parent, cursor, limit}',
-        name: ToolName.QUERY_TABLE_ITEMS,
-        description: "Query records of table data owned by the on-chain wowok object (Demand, Repository, Progress, Service, Treasury, Arb, Permission, Machine, PersonalMark)",
+        uriTemplate: `wowok://${ToolName.QUERY_TABLE_ITEMS_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_TABLE_ITEMS_LIST,
+        description: Query_TableItems_List_Description,
         mimeType:'text/plain'
     },
     {
-        uriTemplate: 'wowok://table_item/arb/{?object, address}',
+        uriTemplate: `wowok://${ToolName.QUERY_DEMAND_SERVICE_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_DEMAND_SERVICE_LIST,
+        description: Demand_TableItems_List_Description,
+        mimeType:'text/plain'
+    },
+    {
+        uriTemplate: `wowok://${ToolName.QUERY_ARB_VOTING_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_ARB_VOTING_LIST,
+        description: Arb_TableItems_List_Description,
+        mimeType:'text/plain',
+    },
+    {
+        uriTemplate: `wowok://${ToolName.QUERY_MACHINE_NODE_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_MACHINE_NODE_LIST,
+        description: Machine_TableItems_List_Description,
+        mimeType:'text/plain',
+    },
+    {
+        uriTemplate: `wowok://${ToolName.QUERY_PERSONAL_MARK_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_PERSONAL_MARK_LIST,
+        description: PersonalMark_TableItems_List_Description,
+        mimeType:'text/plain',
+    },
+    {
+        uriTemplate: `wowok://${ToolName.QUERY_PERMISSION_ENTITY_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_PERMISSION_ENTITY_LIST,
+        description: Permission_TableItems_List_Description,
+        mimeType:'text/plain',
+    },
+    {
+        uriTemplate: `wowok://${ToolName.QUERY_REPOSITORY_DATA_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_REPOSITORY_DATA_LIST,
+        description: Repository_TableItems_List_Description,
+        mimeType:'text/plain',
+    },
+    {
+        uriTemplate: `wowok://${ToolName.QUERY_PROGRESS_HISTORY_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_PROGRESS_HISTORY_LIST,
+        description: Progress_TableItems_List_Description,
+        mimeType:'text/plain',
+    },
+    {
+        uriTemplate: `wowok://${ToolName.QUERY_TREASURY_HISTORY_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_TREASURY_HISTORY_LIST,
+        description: Treasury_TableItems_List_Description,
+        mimeType:'text/plain',
+    },
+    {
+        uriTemplate: `wowok://${ToolName.QUERY_SERVICE_SALE_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_SERVICE_SALE_LIST,
+        description: Service_TableItems_List_Description,
+        mimeType:'text/plain',
+    },
+    {
+        uriTemplate: 'wowok://table_item/arb/{?object, address, no_cache}',
         name: ToolName.QUERY_ARB_VOTING,
-        description: "Query voting information for an address in the on-chain Arb object.",
+        description: Arb_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://table_item/demand/{?object, address}',
+        uriTemplate: 'wowok://table_item/demand/{?object, address, no_cache}',
         name: ToolName.QUERY_DEMAND_SERVICE,
-        description: "Query service recommendation information in the on-chain Demand object.",
+        description: Demand_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://table_item/machine/{?object, node}',
+        uriTemplate: 'wowok://table_item/machine/{?object, node, no_cache}',
         name: ToolName.QUERY_MACHINE_NODE,
-        description: "Query node information in the on-chain Machine object.",
+        description: Machine_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://table_item/personalmark/{?object, address}',
-        name: ToolName.QUERY_MARK_TAGS,
-        description: "Query name and tags for an address in the on-chain PersonalMark object",
+        uriTemplate: 'wowok://table_item/personalmark/{?object, address, no_cache}',
+        name: ToolName.QUERY_PERSONAL_MARK,
+        description: PersonalMark_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://table_item/permission/{?object, address}',
+        uriTemplate: 'wowok://table_item/permission/{?object, address, no_cache}',
         name: ToolName.QUERY_PERMISSION_ENTITY,
-        description: "Query permissions for an address in the on-chain Permission object.",
+        description: Permission_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://table_item/repository/{?object, address, name}',
+        uriTemplate: 'wowok://table_item/repository/{?object, address, name, no_cache}',
         name: ToolName.QUERY_REPOSITORY_DATA,
-        description: "Query data in the on-chain Repository object.",
+        description: Repository_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://table_item/progress/{?object, index}',
+        uriTemplate: 'wowok://table_item/progress/{?object, index, no_cache}',
         name: ToolName.QUERY_PROGRESS_HISTORY,
-        description: "Query historical sessions data in the on-chain Progress object.",
+        description: Progress_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://table_item/treasury/{?object, index}',
+        uriTemplate: 'wowok://table_item/treasury/{?object, index, no_cache}',
         name: ToolName.QUERY_TREASURY_HISTORY,
-        description: "Query historical flows data in the on-chain Treasury object.",
+        description: Treasury_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://table_item/service/{?object, name}',
+        uriTemplate: 'wowok://table_item/service/{?object, name, no_cache}',
         name: ToolName.QUERY_SERVICE_SALE,
-        description: "Query the current information of the item for sale in the on-chain Service object.",
+        description: Service_TableItem_Description,
         mimeType:'text/plain',
     },
     {
-        uriTemplate: 'wowok://events/onNewArb/{?cursor_eventSeq, cursor_txDigest, limit, order}',
-        name: EventName.new_arb,
-        description: "Query the on-chain 'onNewArb' events. When an Order buyer files a complaint to Arbitration, An 'onNewArb' event notification is triggered on the blockchain.",
-        mimeType:'text/plain'
-    },
-    {
-        uriTemplate: 'wowok://events/OnPresentService/{?cursor_eventSeq, cursor_txDigest, limit, order}',
-        name: EventName.present_service,
-        description: "Query the on-chain 'OnPresentService' events. When a recommender completes a Service recommendation to the Demand object, An 'OnPresentService' event notification is triggered on the blockchain.",
-        mimeType:'text/plain'
-    },
-    {
-        uriTemplate: 'wowok://events/OnNewProgress/{?cursor_eventSeq, cursor_txDigest, limit, order}',
-        name: EventName.new_progress,
-        description: "Query the on-chain 'OnNewProgress' events. When the Machine generates and completes a new Progress, An 'OnNewProgress' event notification is triggered on the blockchain.",
-        mimeType:'text/plain'
-    },
-    {
-        uriTemplate: 'wowok://events/OnNewOrder/{?cursor_eventSeq, cursor_txDigest, limit, order}',
-        name: EventName.new_order,
-        description: "Query the on-chain 'OnNewOrder' events. When the Service generates and completes a new Order, An 'OnNewOrder' event notification is triggered on the blockchain.",
+        uriTemplate: 'wowok://events/{?type, cursor_eventSeq, cursor_txDigest, limit, order}',
+        name: ToolName.QUERY_EVENTS,
+        description: QueryEventSchemaDescription,
         mimeType:'text/plain'
     },
     {
@@ -238,12 +281,6 @@ const RESOURCES_TEMPL: ResourceTemplate[] = [
         description: LocalMarkFilterSchemaDescription,
         mimeType:'text/plain'
     },
-    /*{
-        uriTemplate: 'wowok://table_item/{parent}{?key_type, key_value}',
-        name: ToolName.QUERY_TABLE_ITEM,
-        description: "Query a record of table data owned by the wowok object",
-        mimeType:'text/plain'
-    },*/
 ];
 
 const TOOLS: Tool[] = [
@@ -263,64 +300,9 @@ const TOOLS: Tool[] = [
         inputSchema: zodToJsonSchema(QueryPermissionSchema)  as ToolInput,
     },
     {
-        name: ToolName.QUERY_TABLE_ITEMS,
-        description: QueryTableItemsSchemaDescription,
+        name: ToolName.QUERY_TABLE_ITEMS_LIST,
+        description: Query_TableItems_List_Description,
         inputSchema: zodToJsonSchema(QueryTableItemsSchema)  as ToolInput,
-    },
-    /*{
-        name: ToolName.QUERY_TABLE_ITEM,
-        description: "Query a record of table data owned by the wowok object",
-        inputSchema: zodToJsonSchema(QueryTableItemSchema)  as ToolInput,
-    },*/
-    {
-        name: ToolName.QUERY_PERSONAL,
-        description: QueryPermissionSchemaDescription,
-        inputSchema: zodToJsonSchema(QueryPersonalSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_ARB_VOTING,
-        description: "Query voting information for an address in the on-chain Arb object.",
-        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_DEMAND_SERVICE,
-        description: "Query service recommendation information in the on-chain Demand object.",
-        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_MACHINE_NODE,
-        description: "Query node information in the on-chain Machine object.",
-        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_MARK_TAGS,
-        description: "Query name and tags for an address in the on-chain PersonalMark object",
-        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_PERMISSION_ENTITY,
-        description: "Query permissions for an address in the on-chain Permission object.",
-        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_REPOSITORY_DATA,
-        description: "Query data in the on-chain Repository object.",
-        inputSchema: zodToJsonSchema(QueryByAddressNameSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_PROGRESS_HISTORY,
-        description: "Query historical sessions data in the on-chain Progress object.",
-        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_TREASURY_HISTORY,
-        description: "Query historical flows data in the on-chain Treasury object.",
-        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_SERVICE_SALE,
-        description: "Query the current information of the item for sale in the on-chain Service object.",
-        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_LOCAL_MARK_LIST,
@@ -416,10 +398,101 @@ const TOOLS: Tool[] = [
         name: ToolName.OP_ACCOUNT,
         inputSchema: zodToJsonSchema(AccountOperationSchema)  as ToolInput,
         description: AccountOperationSchemaDescription,
-    }
+    },
+    {
+        name: ToolName.QUERY_DEMAND_SERVICE_LIST,
+        description: Demand_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryDemandTableItemsSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_ARB_VOTING_LIST,
+        description: Arb_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryArbTableItemsSchema)  as ToolInput,
+    },    
+    {
+        name: ToolName.QUERY_MACHINE_NODE_LIST,
+        description: Machine_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryMachineTableItemsSchema)  as ToolInput,
+    },    
+    {
+        name: ToolName.QUERY_SERVICE_SALE_LIST,
+        description: Service_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryServiceTableItemsSchema)  as ToolInput,
+    },    {
+        name: ToolName.QUERY_PROGRESS_HISTORY_LIST,
+        description: Progress_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryProgressTableItemsSchema)  as ToolInput,
+    },    {
+        name: ToolName.QUERY_REPOSITORY_DATA_LIST,
+        description: Repository_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryRepositoryTableItemsSchema)  as ToolInput,
+    },    {
+        name: ToolName.QUERY_TREASURY_HISTORY_LIST,
+        description: Treasury_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryTreasuryTableItemsSchema)  as ToolInput,
+    },    {
+        name: ToolName.QUERY_PERSONAL_MARK_LIST,
+        description: PersonalMark_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryPersonalMarkTableItemsSchema)  as ToolInput,
+    },    {
+        name: ToolName.QUERY_PERMISSION_ENTITY_LIST,
+        description: Permission_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryPermissionTableItemsSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_PERSONAL,
+        description: QueryPermissionSchemaDescription,
+        inputSchema: zodToJsonSchema(QueryPersonalSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_ARB_VOTING,
+        description: Arb_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_DEMAND_SERVICE,
+        description: Demand_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_MACHINE_NODE,
+        description: Machine_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_PERSONAL_MARK,
+        description:PersonalMark_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_PERMISSION_ENTITY,
+        description: Permission_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_REPOSITORY_DATA,
+        description: Repository_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByAddressNameSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_PROGRESS_HISTORY,
+        description: Progress_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_TREASURY_HISTORY,
+        description: Treasury_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_SERVICE_SALE,
+        description: Service_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
+    },
 ]
 
 type EventParam = {
+    type: 'onNewArb' | 'OnNewProgress' | 'OnNewOrder' | 'OnPresentService';
     cursor_eventSeq?: string | null;
     cursor_txDigest?: string | null;
     limit?: number | null; 
@@ -455,10 +528,55 @@ async function main() {
             const r = await query_personal(query);
             const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_PERSONAL)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
-        } else if (uri.startsWith("wowok://table_items/")) {
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_TABLE_ITEMS_LIST}`)) {
             const query = parseUrlParams<TableQuery>(uri);
             const r = await query_table(query);
-            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_TABLE_ITEMS)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_TABLE_ITEMS_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_DEMAND_SERVICE_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_DEMAND_SERVICE_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_SERVICE_SALE_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_SERVICE_SALE_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_ARB_VOTING_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_ARB_VOTING_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_TREASURY_HISTORY_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_TREASURY_HISTORY_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_MACHINE_NODE_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_MACHINE_NODE_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_REPOSITORY_DATA_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_REPOSITORY_DATA_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_PERMISSION_ENTITY_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_PERMISSION_ENTITY_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_PERSONAL_MARK_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_PERSONAL_MARK_LIST)!, {uri:uri, text:JSON.stringify(r)});
+            return {tools:[], contents:[content]}
+        } else if (uri.startsWith(`wowok://${ToolName.QUERY_PROGRESS_HISTORY_LIST}`)) {
+            const query = parseUrlParams<TableQuery>(uri);
+            const r = await query_table(query);
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_PROGRESS_HISTORY_LIST)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/arb/")) {
             const query = parseUrlParams<QueryTableItem_Address>(uri);
@@ -492,7 +610,7 @@ async function main() {
         } else if (uri.startsWith("wowok://table_item/personalmark/")) {
             const query = parseUrlParams<QueryTableItem_Address>(uri);
             const r = await queryTableItem_MarkTag(query);
-            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_MARK_TAGS)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_PERSONAL_MARK)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.startsWith("wowok://table_item/treasury/")) {
             const query = parseUrlParams<QueryTableItem_Index>(uri);
@@ -504,33 +622,12 @@ async function main() {
             const r = await queryTableItem_ProgressHistory(query);
             const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_PROGRESS_HISTORY)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
-        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onnewarb/")) {
+        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/")) {
             const query = parseUrlParams<EventParam>(uri);
-            const r = await query_events({type:'OnNewArb', 
+            const r = await query_events({type:query.type as any, 
                 cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
                 limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===EventName.new_arb)!, {uri:uri, text:JSON.stringify(r)});
-            return {tools:[], contents:[content]}
-        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onpresentservice/")) {
-            const query = parseUrlParams<EventParam>(uri);
-            const r = await query_events({type:'OnPresentService', 
-                cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
-                limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===EventName.present_service)!, {uri:uri, text:JSON.stringify(r)});
-            return {tools:[], contents:[content]}
-        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onnewprogress/")) {
-            const query = parseUrlParams<EventParam>(uri);
-            const r = await query_events({type:'OnNewProgress', 
-                cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
-                limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===EventName.new_progress)!, {uri:uri, text:JSON.stringify(r)});
-            return {tools:[], contents:[content]}
-        } else if (uri.toLocaleLowerCase().startsWith("wowok://events/onneworder/")) {
-            const query = parseUrlParams<EventParam>(uri);
-            const r = await query_events({type:'OnNewOrder', 
-                cursor:query.cursor_eventSeq && query.cursor_txDigest ? {eventSeq:query.cursor_eventSeq, txDigest:query.cursor_txDigest} : undefined,
-                limit:query.limit, order: query.order === 'descending' || query.order === 'desc' ? 'descending' : 'ascending'});
-            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===EventName.new_order)!, {uri:uri, text:JSON.stringify(r)});
+            const content = Object.assign(RESOURCES_TEMPL.find(v=>v.name===ToolName.QUERY_EVENTS)!, {uri:uri, text:JSON.stringify(r)});
             return {tools:[], contents:[content]}
         } else if (uri.toLocaleLowerCase().startsWith("wowok://local_mark/list")) {
             return {tools:[], contents:[{uri:uri, text:JSON.stringify(await query_local_mark_list())}]}
@@ -606,21 +703,23 @@ async function main() {
                 };
             }
       
-            case ToolName.QUERY_TABLE_ITEMS: {
+            case ToolName.QUERY_TABLE_ITEMS_LIST:
+            case ToolName.QUERY_ARB_VOTING_LIST: 
+            case ToolName.QUERY_DEMAND_SERVICE_LIST:
+            case ToolName.QUERY_MACHINE_NODE_LIST:
+            case ToolName.QUERY_SERVICE_SALE_LIST:
+            case ToolName.QUERY_PROGRESS_HISTORY_LIST:
+            case ToolName.QUERY_REPOSITORY_DATA_LIST:
+            case ToolName.QUERY_TREASURY_HISTORY_LIST:
+            case ToolName.QUERY_PERSONAL_MARK_LIST:
+            case ToolName.QUERY_PERMISSION_ENTITY_LIST: {
                 const args = QueryTableItemsSchema.parse(request.params.arguments);
                 const r = await query_table(args);
                 return {
                     content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
-      
-            /*case ToolName.QUERY_TABLE_ITEM: {
-                const args = QueryTableItemSchema.parse(request.params.arguments);
-                const r = await query_table(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }*/
+            
             case ToolName.QUERY_ARB_VOTING: {
               const args = QueryByAddressSchema.parse(request.params.arguments);
               const r = await queryTableItem_ArbVoting(args);
@@ -637,7 +736,7 @@ async function main() {
                 };
             }
       
-            case ToolName.QUERY_MARK_TAGS: {
+            case ToolName.QUERY_PERSONAL_MARK: {
                 const args = QueryByAddressSchema.parse(request.params.arguments);
                 const r = await queryTableItem_MarkTag(args);
                 return {
