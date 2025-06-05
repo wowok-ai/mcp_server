@@ -62,8 +62,8 @@ export const MarkNameSchema = z.string().nonempty().describe(MarkName_Address_De
 
 export const AccountOrMarkNameDescription = 'Either a specifically specified address or a name used to look up the address from the local account or mark.';
 export const AccountOrMarkNameSchema = z.union([
-    z.object({account_name: AccountNameSchema}),
-    z.object({mark_name: MarkNameSchema})
+    z.object({account_or_address: AccountNameSchema}),
+    z.object({mark_or_address: MarkNameSchema})
 ]).describe(AccountOrMarkNameDescription);   
 
 export const QueryObjectsSchema = z.object({
