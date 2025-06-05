@@ -12,7 +12,8 @@ import { query_objects, WOWOK, query_events, query_permission, query_table, call
   PermissionQuery, PersonalQuery, TableQuery, query_personal,
   QueryTableItem_Address, QueryTableItem_Name, QueryTableItem_AddressName, QueryTableItem_Index,
   local_mark_operation, local_info_operation, account_operation, query_local_mark_list, query_local_info_list, query_account, 
-  query_account_list, query_local_mark, query_local_info, QueryAccount, LocalMarkFilter,
+  query_account_list, query_local_mark, query_local_info, QueryAccount, LocalMarkFilter, query_treasury_received,
+  QueryTreasuryReceived
   } from 'wowok_agent';
 import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryTableItemSchema, 
   QueryByAddressNameSchema, QueryByIndexSchema, QueryByNameSchema, QueryByAddressSchema,
@@ -27,6 +28,8 @@ import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTable
   Machine_TableItem_Description, PersonalMark_TableItem_Description, Permission_TableItem_Description,
   Repository_TableItem_Description, Progress_TableItem_Description, Service_TableItem_Description,
   Treasury_TableItem_Description,
+  QueryTreasuryReceivedSchema,
+  Treasury_ReceivedObject_Description, 
 } from './query.js';
 import { CallArbitrationSchema, CallArbitrationSchemaDescription, CallDemandSchema, CallDemandSchemaDescription, CallGuardSchema, CallGuardSchemaDescription, CallMachineSchema, CallMachineSchemaDescription, CallObejctPermissionSchema,
     CallObejctPermissionSchemaDescription,
@@ -35,7 +38,8 @@ import { CallArbitrationSchema, CallArbitrationSchemaDescription, CallDemandSche
  } from "./call.js";
 import { parseUrlParams } from "./util.js"; 
 import { AccountListSchemaDescription, AccountListSchema, AccountOperationSchema, LocalInfoListSchema, LocalInfoListSchemaDescription, LocalInfoOperationSchema, LocalMarkFilterSchema, LocalMarkFilterSchemaDescription, 
-    LocalMarkOperationSchema, QueryAccountSchema, QueryAccountSchemaDescription, QueryLocalInfoSchema, QueryLocalInfoSchemaDescription, QueryLocalMarkSchema, QueryLocalMarkSchemaDescription, AccountOperationSchemaDescription, LocalInfoOperationSchemaDescription, LocalMarkOperationSchemaDescription } from "./local.js";
+    LocalMarkOperationSchema, QueryAccountSchema, QueryAccountSchemaDescription, QueryLocalInfoSchema, QueryLocalInfoSchemaDescription, QueryLocalMarkSchema, QueryLocalMarkSchemaDescription, AccountOperationSchemaDescription, LocalInfoOperationSchemaDescription, LocalMarkOperationSchemaDescription, 
+    localMarkListDescription} from "./local.js";
 
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
@@ -49,41 +53,43 @@ export enum ToolName {
     QUERY_LOCAL_MARK_LIST = 'local_marks_list',
     QUERY_LOCAL_INFO_LIST = 'local_information_list',
     QUERY_ACCOUNT_LIST = 'local_accounts_list',
+    QUERY_LOCAL_MARK_FILTER = 'local_mark_filter',
     QUERY_LOCAL_MARK = 'local_mark_query',
     QUERY_LOCAL_INFO = 'local_info_query',
     QUERY_ACCOUNT = 'local_account_query',
-    OP_PERSONAL = 'onchain_personal_operations',
-    OP_MACHINE = 'onchain_machine_operations',
-    OP_SERVICE = 'onchain_service_operations',
-    OP_PERMISSION = 'onchain_permission_operations',
-    OP_TREASURY = 'onchain_treasury_operations',
-    OP_ARBITRATION = 'onchain_arbitration_operations',
-    OP_REPOSITORY = 'onchain_repository_operations',
-    OP_GUARD = 'onchain_guard_operations',
-    OP_DEMAND = 'onchain_demand_operations',
-    OP_REPLACE_PERMISSION_OBJECT = 'onchain_replace_permission_object',
+    OP_PERSONAL = 'personal_operations',
+    OP_MACHINE = 'machine_operations',
+    OP_SERVICE = 'service_operations',
+    OP_PERMISSION = 'permission_operations',
+    OP_TREASURY = 'treasury_operations',
+    OP_ARBITRATION = 'arbitration_operations',
+    OP_REPOSITORY = 'repository_operations',
+    OP_GUARD = 'guard_operations',
+    OP_DEMAND = 'demand_operations',
+    OP_REPLACE_PERMISSION_OBJECT = 'replace_permission_object',
     OP_ACCOUNT = 'local_account_operations',
     OP_LOCAL_MARK = 'local_mark_operations',
     OP_LOCAL_INFO = 'local_info_operations',
-    QUERY_TABLE_ITEMS_LIST = 'onchain_table_items_query', 
-    QUERY_ARB_VOTING_LIST = 'onchain_arb_table_items_list',
-    QUERY_DEMAND_SERVICE_LIST = 'onchain_demand_table_items_list',
-    QUERY_PERMISSION_ENTITY_LIST = 'onchain_permission_table_items_list',
-    QUERY_MACHINE_NODE_LIST = 'onchain_machine_table_items_list',
-    QUERY_SERVICE_SALE_LIST = 'onchain_service_table_items_list',
-    QUERY_PROGRESS_HISTORY_LIST = 'onchain_progress_table_items_list',
-    QUERY_TREASURY_HISTORY_LIST = 'onchain_treasury_table_items_list',
-    QUERY_REPOSITORY_DATA_LIST = 'onchain_repository_table_items_list',
-    QUERY_PERSONAL_MARK_LIST = 'onchain_personalmark_table_items_list',
-    QUERY_ARB_VOTING = 'onchain_arb_table_item_query',
-    QUERY_DEMAND_SERVICE = 'onchain_demand_table_item_query',
-    QUERY_PERMISSION_ENTITY = 'onchain_permission_table_item_query',
-    QUERY_MACHINE_NODE = 'onchain_machine_table_item_query',
-    QUERY_SERVICE_SALE = 'onchain_service_table_item_query',
-    QUERY_PROGRESS_HISTORY = 'onchain_progress_table_item_query',
-    QUERY_TREASURY_HISTORY = 'onchain_treasury_table_item_query',
-    QUERY_REPOSITORY_DATA = 'onchain_repository_table_item_query',
-    QUERY_PERSONAL_MARK = 'onchain_personalmark_table_item_query',
+    QUERY_TABLE_ITEMS_LIST = 'table_items_list', 
+    QUERY_ARB_VOTING_LIST = 'arb_table_items_list',
+    QUERY_DEMAND_SERVICE_LIST = 'demand_table_items_list',
+    QUERY_PERMISSION_ENTITY_LIST = 'permission_table_items_list',
+    QUERY_MACHINE_NODE_LIST = 'machine_table_items_list',
+    QUERY_SERVICE_SALE_LIST = 'service_table_items_list',
+    QUERY_PROGRESS_HISTORY_LIST = 'progress_table_items_list',
+    QUERY_TREASURY_HISTORY_LIST = 'treasury_table_items_list',
+    QUERY_REPOSITORY_DATA_LIST = 'repository_table_items_list',
+    QUERY_PERSONAL_MARK_LIST = 'personalmark_table_items_list',
+    QUERY_ARB_VOTING = 'arb_table_item_query',
+    QUERY_DEMAND_SERVICE = 'demand_table_item_query',
+    QUERY_PERMISSION_ENTITY = 'permission_table_item_query',
+    QUERY_MACHINE_NODE = 'machine_table_item_query',
+    QUERY_SERVICE_SALE = 'service_table_item_query',
+    QUERY_PROGRESS_HISTORY = 'progress_table_item_query',
+    QUERY_TREASURY_HISTORY = 'treasury_table_item_query',
+    QUERY_REPOSITORY_DATA = 'repository_table_item_query',
+    QUERY_PERSONAL_MARK = 'personalmark_table_item_query',
+    QUERY_TREASURY_RECEIVE = 'treasury_receive_query',
 }
 
 WOWOK.Protocol.Instance().use_network(WOWOK.ENTRYPOINT.testnet);
@@ -116,6 +122,12 @@ const RESOURCES: Resource[] = [
         description: LocalInfoListSchemaDescription,
         mimeType:'text/plain'
     },
+    {
+        uri: 'wowok://local_mark/list',
+        name: ToolName.QUERY_LOCAL_MARK_LIST,
+        description: localMarkListDescription,
+        mimeType:'text/plain'
+    },
 ];
 
 const RESOURCES_TEMPL: ResourceTemplate[] = [
@@ -135,6 +147,30 @@ const RESOURCES_TEMPL: ResourceTemplate[] = [
         uriTemplate: 'wowok://personal/{?address, no_cache}',
         name: ToolName.QUERY_PERSONAL,
         description: QueryPersonalSchemaDescription,
+        mimeType:'text/plain'
+    },
+    {
+        uriTemplate: 'wowok://account/{?name_or_address, balance_or_coin, token_type}',
+        name:ToolName.QUERY_ACCOUNT,
+        description:  QueryAccountSchemaDescription,
+        mimeType:'text/plain'
+    },
+    {
+        uriTemplate: 'wowok://local_mark/{?name}',
+        name: ToolName.QUERY_LOCAL_MARK,
+        description: QueryLocalMarkSchemaDescription,
+        mimeType:'text/plain'
+    },
+    {
+        uriTemplate: 'wowok://local_info/{?name}',
+        name: ToolName.QUERY_LOCAL_INFO,
+        description: QueryLocalInfoSchemaDescription,
+        mimeType:'text/plain'
+    },
+    {
+        uriTemplate: 'wowok://local_mark/filter/{?name, tags*, object}',
+        name: ToolName.QUERY_LOCAL_MARK_FILTER,
+        description: LocalMarkFilterSchemaDescription,
         mimeType:'text/plain'
     },
     {
@@ -258,29 +294,11 @@ const RESOURCES_TEMPL: ResourceTemplate[] = [
         mimeType:'text/plain'
     },
     {
-        uriTemplate: 'wowok://account/{?name_or_address, balance_or_coin, token_type}',
-        name:ToolName.QUERY_ACCOUNT,
-        description:  QueryAccountSchemaDescription,
+        uriTemplate: 'wowok://treasury_received/{?treasury_object, limit, order}',
+        name: ToolName.QUERY_TREASURY_RECEIVE,
+        description: QueryEventSchemaDescription,
         mimeType:'text/plain'
-    },
-    {
-        uriTemplate: 'wowok://local_mark/{?name}',
-        name: ToolName.QUERY_LOCAL_MARK,
-        description: QueryLocalMarkSchemaDescription,
-        mimeType:'text/plain'
-    },
-    {
-        uriTemplate: 'wowok://local_info/{?name}',
-        name: ToolName.QUERY_LOCAL_INFO,
-        description: QueryLocalInfoSchemaDescription,
-        mimeType:'text/plain'
-    },
-    {
-        uriTemplate: 'wowok://local_mark/filter/{?name, tags*, object}',
-        name: ToolName.QUERY_LOCAL_MARK_LIST,
-        description: LocalMarkFilterSchemaDescription,
-        mimeType:'text/plain'
-    },
+    }
 ];
 
 const TOOLS: Tool[] = [
@@ -288,21 +306,6 @@ const TOOLS: Tool[] = [
         name: ToolName.QUERY_OBJECTS,
         description: QueryObjectsSchemaDescription,
         inputSchema: zodToJsonSchema(QueryObjectsSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_EVENTS,
-        description: QueryEventSchemaDescription,
-        inputSchema: zodToJsonSchema(QueryEventSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_PERMISSIONS,
-        description: QueryPermissionSchemaDescription,
-        inputSchema: zodToJsonSchema(QueryPermissionSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_TABLE_ITEMS_LIST,
-        description: Query_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryTableItemsSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_LOCAL_MARK_LIST,
@@ -335,6 +338,11 @@ const TOOLS: Tool[] = [
         inputSchema: zodToJsonSchema(QueryAccountSchema)  as ToolInput,
     }, 
     {
+        name: ToolName.OP_SERVICE,
+        description: CallServiceSchemaDescription,
+        inputSchema: zodToJsonSchema(CallServiceSchema)  as ToolInput,
+    },
+    {
         name: ToolName.OP_PERSONAL,
         description: CallPersonalSchemaDescription,
         inputSchema: zodToJsonSchema(CallPersonalSchema)  as ToolInput,
@@ -360,11 +368,6 @@ const TOOLS: Tool[] = [
         inputSchema: zodToJsonSchema(CallGuardSchema)  as ToolInput,
     },
     {
-        name: ToolName.OP_SERVICE,
-        description: CallServiceSchemaDescription,
-        inputSchema: zodToJsonSchema(CallServiceSchema)  as ToolInput,
-    },
-    {
         name: ToolName.OP_ARBITRATION,
         description: CallArbitrationSchemaDescription,
         inputSchema: zodToJsonSchema(CallArbitrationSchema)  as ToolInput,
@@ -380,11 +383,6 @@ const TOOLS: Tool[] = [
         inputSchema: zodToJsonSchema(CallDemandSchema)  as ToolInput,
     },
     {
-        name: ToolName.OP_REPLACE_PERMISSION_OBJECT,
-        inputSchema: zodToJsonSchema(CallObejctPermissionSchema)  as ToolInput,
-        description: CallObejctPermissionSchemaDescription,
-    }, 
-    {
         name: ToolName.OP_LOCAL_MARK,
         inputSchema: zodToJsonSchema(LocalMarkOperationSchema)  as ToolInput,
         description: LocalMarkOperationSchemaDescription,
@@ -398,6 +396,26 @@ const TOOLS: Tool[] = [
         name: ToolName.OP_ACCOUNT,
         inputSchema: zodToJsonSchema(AccountOperationSchema)  as ToolInput,
         description: AccountOperationSchemaDescription,
+    },
+    {
+        name: ToolName.OP_REPLACE_PERMISSION_OBJECT,
+        inputSchema: zodToJsonSchema(CallObejctPermissionSchema)  as ToolInput,
+        description: CallObejctPermissionSchemaDescription,
+    }, 
+    {
+        name: ToolName.QUERY_PERMISSIONS,
+        description: QueryPermissionSchemaDescription,
+        inputSchema: zodToJsonSchema(QueryPermissionSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_TABLE_ITEMS_LIST,
+        description: Query_TableItems_List_Description,
+        inputSchema: zodToJsonSchema(QueryTableItemsSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_EVENTS,
+        description: QueryEventSchemaDescription,
+        inputSchema: zodToJsonSchema(QueryEventSchema)  as ToolInput,
     },
     {
         name: ToolName.QUERY_DEMAND_SERVICE_LIST,
@@ -445,6 +463,21 @@ const TOOLS: Tool[] = [
         inputSchema: zodToJsonSchema(QueryPersonalSchema)  as ToolInput,
     },
     {
+        name: ToolName.QUERY_TREASURY_RECEIVE,
+        description: Treasury_ReceivedObject_Description,
+        inputSchema: zodToJsonSchema(QueryTreasuryReceivedSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_TREASURY_HISTORY,
+        description: Treasury_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
+    },
+    {
+        name: ToolName.QUERY_SERVICE_SALE,
+        description: Service_TableItem_Description,
+        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
+    },
+    {
         name: ToolName.QUERY_ARB_VOTING,
         description: Arb_TableItem_Description,
         inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
@@ -478,16 +511,6 @@ const TOOLS: Tool[] = [
         name: ToolName.QUERY_PROGRESS_HISTORY,
         description: Progress_TableItem_Description,
         inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_TREASURY_HISTORY,
-        description: Treasury_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_SERVICE_SALE,
-        description: Service_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
     },
 ]
 
@@ -635,6 +658,9 @@ async function main() {
             return {tools:[], contents:[{uri:uri, text:JSON.stringify(await query_local_info_list())}]} 
         } else if (uri.toLocaleLowerCase().startsWith("wowok://account/list")) {
             return {tools:[], contents:[{uri:uri, text:JSON.stringify(await query_account_list())}]}    
+        } else if (uri.toLocaleLowerCase().startsWith("wowok://treasury_received/")) {
+            const query = parseUrlParams<QueryTreasuryReceived>(uri);  
+            return {tools:[], contents:[{uri:uri, text:JSON.stringify(await query_treasury_received(query))}]}    
         } else if (uri.toLocaleLowerCase().startsWith('wowok://local_mark/filter/')) {
             const query = parseUrlParams<LocalMarkFilter>(uri);  
             server.sendLoggingMessage({level:'info', message:JSON.stringify(query)})
@@ -702,7 +728,7 @@ async function main() {
                     content: [{ type: "text", text: JSON.stringify(r) }],
                 };
             }
-      
+            
             case ToolName.QUERY_TABLE_ITEMS_LIST:
             case ToolName.QUERY_ARB_VOTING_LIST: 
             case ToolName.QUERY_DEMAND_SERVICE_LIST:
@@ -720,6 +746,14 @@ async function main() {
                 };
             }
             
+            case ToolName.QUERY_TREASURY_RECEIVE: {
+                const args = QueryTreasuryReceivedSchema.parse(request.params.arguments);
+                const r = await query_treasury_received(args);
+                return {
+                    content: [{ type: "text", text: JSON.stringify(r) }],
+                };
+            }
+
             case ToolName.QUERY_ARB_VOTING: {
               const args = QueryByAddressSchema.parse(request.params.arguments);
               const r = await queryTableItem_ArbVoting(args);
@@ -792,7 +826,7 @@ async function main() {
                 };
             }
 
-            case ToolName.QUERY_LOCAL_MARK_LIST: {
+            case ToolName.QUERY_LOCAL_MARK_FILTER: {
                 const args = LocalMarkFilterSchema.parse(request.params.arguments);
                 const r = await query_local_mark_list(args);
                 return {

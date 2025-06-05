@@ -81,6 +81,7 @@ export const QueryLocalInfoSchema = z.object({
     name: z.string().default(LocalInfoNameDefault).describe("The name of the local info."),
 }).describe(QueryLocalInfoSchemaDescription);
 
+export const localMarkListDescription = 'List local marks. Local marks facilitate efficient object address management by assigning names and tags to addresses, enabling faster querying and organization.'
 export const LocalMarkFilterSchemaDescription = `Filter local marks by optional criteria: name (string), tags (array of strings), or object address (string). Parameters can be used individually or in combination for precise queries. Returns an array of local mark objects, each containing: address (on-chain object address), name (human-readable name), and tags (categorical tags). Local marks enhance address management efficiency through flexible multi-condition filtering.`; 
 export const LocalMarkFilterSchema = z.object({
     name: z.string().optional().describe("The name of the local mark."),

@@ -1,6 +1,7 @@
 
 import { z } from "zod";
 import { WOWOK } from "wowok_agent";
+import { AccountOrMarkNameDescription, AccountOrMarkNameSchema, MarkName_Address_Description, MarkNameSchema } from "./query.js";
 
 const PermissioIndexArray = WOWOK.PermissionInfo.filter(i => i.index !== WOWOK.PermissionIndex.user_defined_start)
     .map(v => z.literal(v.index).describe(`module:${v.module}.name:${v.name}.description:${v.description}`));
@@ -13,55 +14,55 @@ const SafeUint8ArraySchema = z.custom<Uint8Array>((val) =>
     Object.prototype.toString.call(val) === "[object Uint8Array]"
 );
 
-const CallOldObjectSchema = z.object({
-    address: z.string().nonempty().describe('The address of the object.')
-})
-
 const NamedObjectSchema = z.object({
-    name: z.string().describe('The name of the new object.'),
-    tags: z.array(z.string().nonempty()).describe('A list of tags for the new object.'),
+    name: z.string().optional().describe('The name of the new object.'),
+    tags: z.array(z.string().nonempty()).optional().describe('A list of tags for the new object.'),
     useAddressIfNameExist: z.boolean().optional().describe('While a naming conflict occurs, prioritize the address as the identifier(If true); otherwise, use this name and change the original name to its address.'),
-    onChain: z.boolean().optional().describe('If true, the name and tags will be recorded on-chain. Regardless, a local copy is always stored for future lookup and reference the object by name.'),
+    onChain: z.boolean().optional().describe('If true, the name and tags of the object will be made visible on-chain.'),
+}).describe(`This configuration adds names and tags to object addresses (long random strings that are hard to remember and reference) within the local mark (privately visible only on the current device), enabling users to search or operate on objects via names/tags. If the 'onChain' property is set to 'true', the names and tags will be recorded in the on-chain PersonalMark object, making them publicly visible through users' personal on-chain pages.`);
+
+
+const NamedObjectWithDescriptionSchema = NamedObjectSchema.extend({
+    description: z.string().optional().describe('Description of the newly named wowok object.')
 });
 
-const NewObjectSchema = z.object({
-    namedNew: NamedObjectSchema.optional().describe('Newly named wowok object.'),
-})
+const ObjectParamSchema = z.union([
+    z.string().nonempty().describe(MarkName_Address_Description),
+    NamedObjectWithDescriptionSchema
+]).describe('The on-chain object to be operated on, which can be an existing object referenced by address or a newly created on-chain object (marked with a name and tags).');
 
-const NewObjectWithDescriptionSchema = z.object({
-    namedNew: NamedObjectSchema.optional().describe('Newly named wowok object.'),
-    description: z.string().optional().describe('Description of the newly named wowok object.')
-}).optional();
+const NamedObjectWithPermissionSchema = NamedObjectSchema.extend({
+    permission: ObjectParamSchema.optional().describe('The object that has the permission to operate on the object.')
+}); 
+
+const TypeNamedObjectWithPermissionSchema = NamedObjectWithPermissionSchema.extend({
+    type_parameter: z.string().nonempty().describe('The generic type parameter of the on-chain object.')
+}).describe('Specifies the generic type parameter for newly created objects. For example, setting a Treasury object to use the generic type (e.g., 0x2::sui::SUI) indicates it will only handle vault operations for this specific token type; setting a Service object to a token type means its products/services can only be purchased using tokens of this type.')
+
+const ObjectTypedMainSchema = z.union([
+    z.string().nonempty().describe(MarkName_Address_Description),
+    TypeNamedObjectWithPermissionSchema
+]).describe('The on-chain object with generic parameters to be operated on, which can be an existing object referenced by address, or a newly created on-chain object where operation permissions are set, generic parameters are specified, and its address is named and tagged.');
+
+const ObjectMainSchema = z.union([
+    z.string().nonempty().describe(MarkName_Address_Description),
+    NamedObjectWithPermissionSchema
+]).describe('The on-chain object to be operated on, which can be an existing object referenced by address, or a newly created on-chain object where operation permissions are set, and its address is named and tagged.');
 
 const ValueTypeSchema = z.nativeEnum(WOWOK.ValueType).describe('The value of the underlying data type of the Wowok protocol.');
 const GuardIndentifierSchema = z.number().int().min(1).max(255);
 
-const CallObjectSchema = z.union([CallOldObjectSchema, NewObjectSchema]);
-const CallObjectWithDescriptionSchema = z.union([NewObjectWithDescriptionSchema, CallOldObjectSchema]);
 const TokenBalanceSchema = z.union([z.string(), z.number().int().min(0)]).describe('The number of tokens.');
 
-const PaymentIndexSchema = z.union([z.string(), z.number().int().min(0)]).describe('Transfer number.');
-const PaymentRemarkSchema =  z.string().default('').describe('Notes for the transfer.');
-const PaymentForObjectSchema = z.string().nonempty().optional().describe('The address of the object related to the purpose of the transfer.' + 
-    'Such as a transfer operation in the Progress object.');
-const PaymentForGuardSchema = z.string().nonempty().optional().describe('The address of the Guard object associated with the transfer purpose.' + 
-    'Such as a transfer to pass a Guard verification.' );
-
-
-const RepositoryOperationSchema = z.union([
+const ObjectsOperationSchema = z.union([
     z.object({
         op: z.union([z.literal('set'), z.literal('remove'), z.literal('add')]),
-        repositories: z.array(z.string()).describe('Addresses of the Repository object.')
-    }).describe('set or remove or add repositories.'),
+        objects: z.array(MarkNameSchema).describe(`Addresses of the objects to be operated on.`),
+    }).describe('Set, remove, or add objects to the list.'),
     z.object({
         op: z.literal('removeall')
-    }).describe('remove all the repositories.')
+    }).describe('Remove all objects from the list.')
 ]);
-
-const OrderCryptoInfoSchema = z.object({
-    customer_pubkey: z.string().nonempty().describe('The public key for encrypting the order information'),
-    customer_info_crypt: z.string().describe('Encrypted order information'),
-}).optional().describe('The order sensitive information Encrypted data');
 
 const GuardNodeSchema: z.ZodType = z.lazy(() => z.union([
     z.object({
@@ -153,13 +154,13 @@ const GuardPercentSchema = z.union([
     z.object({
         op: z.union([z.literal('add'), z.literal('set')]),
         guards: z.array(z.object({
-            guard: z.string().nonempty().describe('The address of the Guard object'),
+            guard: MarkNameSchema.describe('The address of the Guard object'),
             percent: z.number().int().min(0).max(100).describe(' Numeric value without the percent sign')
         }).describe('The address of Guard object and the corresponding value.'))
     }).describe('Add the guards.'), 
     z.object({
         op: z.literal('remove'), 
-        addresses: z.array(z.string().nonempty().describe('The address of the Guard object'))
+        guards: z.array(MarkNameSchema.describe('The address of the Guard object'))
     }).describe('Remove the guards.'),
     z.object({
         op: z.literal('removeall'), 
@@ -177,9 +178,11 @@ const RepositoryValueTypeSchema = z.union([
 ]).describe('The Repository object stores supported data types.');
 
 export const CallDemandDataSchema = z.object({
-    type_parameter: z.string().describe("Type of Demand bounties. For example, Coin object: 0x2::coin::Coin<0x2::sui::SUI>, or NFT object: 0x1234::nft:NFT."),
-    object: CallObjectSchema.optional().describe('Modify the existing Demand object or build a new one.'),
-    permission: CallObjectWithDescriptionSchema.optional().describe('Specify Permission object that manages rights or build a new one'),
+    object: ObjectTypedMainSchema,
+    present:z.object({
+        service:MarkNameSchema.optional().describe(`${MarkName_Address_Description} The address of the Service object.`),
+        recommend_words:z.string().describe('Service recommendation words.'),
+    }).optional().describe('Recommend service to the Demand object. '),
     description: z.string().optional().describe('Description of the Demand object'),
     time_expire: z.union([z.object({
             op:z.literal('duration').describe('Set by duration time'),
@@ -193,31 +196,22 @@ export const CallDemandDataSchema = z.object({
     bounty:z.union([z.object({
         op:z.literal('add').describe('Add new bounty'),
         object:z.union([z.object({
-            address:z.string().nonempty().describe('The object address owned by the transaction signer.')}), 
-            z.object({balance:TokenBalanceSchema}).describe('The number of assets of the token type that owned by the transaction signer, If the bounty type is 0x2::coin::Coin<... >')
-            ]).describe('Demand bounty that transaction signature paid')    
-        }), z.object({
-            op:z.literal('reward').describe('Reward bounty to the service recommender'),
+            address:z.string().nonempty().describe(`${MarkName_Address_Description} The object address (supporting both FT and NFT objects) owned by the transaction signer.`)}), 
+            z.object({balance:TokenBalanceSchema}).describe('The token quantity owned by the transaction signer. This parameter is valid only if the Demand generic type is FT (0x2::coin::Coin<...>); if the Demand generic type is not FT, using this parameter will fail.')
+            ]).describe('Specify the address of an existing object or generate a new object address (which includes the specified quantity of tokens).'),  
+        }).describe('Add the object owned by the transaction signer to the bounty pool of the Demand'), 
+        z.object({
+            op:z.literal('reward').describe('Reward all bounties to the service recommender.'),
             service:z.string().describe('The address of the Service object.')
         }), z.object({
             op:z.literal('refund').describe('Retrieve the bounty. ' + 
                 'If no service meets the Demand, the demand-related authority can retrieve the bounty after the promised time (time_expire).')
         })]).optional().describe('Operation on bounty'),
-    present:z.object({
-        service:z.union([GuardIndentifierSchema.describe('The Service object identifier number specified in the Guard, if had already set.'+
-                'When passing Guard verification, the recommender must provide the address of the specific Service object.'),
-            z.string().describe('The address of the Service object recommended.')
-        ]).describe('Recommended service.'),
-        recommend_words:z.string().describe('Service recommendation words.'),
-        service_pay_type: z.string().describe('The payment token type of the service.'),
-        guard:z.string().optional().describe('Specify the Guard to validate.'+ 'If not specified, the Settings are automatically fetched from the chain.' +
-            'If the guard of the Demand object is set, the service recommender must meet the condition verification of the Guard in order to successfully recommend.')
-    }).optional().describe('Recommend service to the Demand object.'),
     guard:z.object({
-        address: z.string().describe('The address of the Guard object.'),
+        address: z.string().describe(`${MarkName_Address_Description} The address of the Guard object.`),
         service_id_in_guard:GuardIndentifierSchema.optional().describe('Identifier in the Guard object. When a service is recommended to Demand, the service object is validated with the Identifier, if specified.')
-    }).optional().describe('Recommend to Demand the Guard condition validation that any service needs to meet. Such as service rating, service referrer history, etc. '+
-        'Once Guard is set, the service is recommended to Demand only after the Guard condition is verified.')
+    }).optional().describe(`Recommend to Demand the Guard condition validation that any service needs to meet. Such as service rating, service referrer history, etc. 
+        Once Guard is set, the service is recommended to Demand only after the Guard condition is verified.`)
     }).describe('Data definition that operates on the Demand object. The operations are performed one after the other in the field order.'); 
 
 export const CallGuardDataSchema = z.object({
@@ -232,15 +226,72 @@ export const CallGuardDataSchema = z.object({
     })).optional().describe('Data table for Const or Witness'),
 }).describe('Data definition that operates on the on-chain Guard object. The operations are performed one after the other in the field order.');
 
+const OptionProgressObjectSchema = z.string().optional().describe(`${MarkName_Address_Description} The Progress object for the operation; if undefined, indicates that the operation uses a Progress newly created by the progress_new field`);
+const ProgressObjectSchema = z.string().describe(`${MarkName_Address_Description} The Progress object for the operation.`);
+
 export const CallMachineDataSchema = z.object({
-    object: CallObjectSchema.optional().describe('Modify the existing Machine object or build a new one.'),
-    permission: CallObjectWithDescriptionSchema.optional().describe('Specify Permission object that manages rights or build a new one.'),
+    object: ObjectMainSchema,
+    progress_new: z.object({
+        task_address:z.string().nonempty().optional().describe(`${MarkName_Address_Description} The address of the task object(such as an Order).`),
+        namedNew: NamedObjectSchema.optional().describe('Newly named Progress object.'),
+        }).optional().describe('Create a new Progress object for the Machine object. ' + 
+            'The new Progress uses the processes, operations, and permissions already defined by the Machine object.' + 
+            'If the Machine Object is not published, the creation fails.'),
+    progress_context_repository: z.object({
+        progress:OptionProgressObjectSchema,
+        repository:z.string().optional().describe(`${MarkName_Address_Description} The address of the Repository object.`),
+    }).optional().describe('Set or unset the context repository for the Progress object.'),
+    progress_namedOperator: z.object({
+        progress:OptionProgressObjectSchema,
+        data:z.array(z.object({
+            name:z.string().nonempty().describe('The namespace defined in the Machine node.'),
+            operators:z.array(AccountOrMarkNameSchema).describe('Operator addresses.')
+        })).describe('A list of operator addresses for different namespaces')
+    }).optional().describe("Add the operator addresses to the namespace defined by the Machine node, " + 
+        "so that these operators have corresponding operation permissions in the Progress. " + 
+        "The namespace of each Progress created by Machine is independent, and its operator Settings are independent of each other."),
+    progress_parent: z.object({
+        progress:OptionProgressObjectSchema,
+        parent:z.object({
+            parent_id: z.string().nonempty().describe(`${MarkName_Address_Description} The address of the parent Progress object.`),
+            parent_session_id: z.number().int().min(0).describe(`A number in the parent Progress object session list. 
+                The session number of each node of the Progress object is different. Each number corresponds sequentially to each of its working nodes.
+                The initial node session number is 0, and its value increases by 1 for each working node.`
+            ),
+            operation: ProgressOperationSchema
+        }).optional().describe('The parent Progress object and the session operation it performs.')
+    }).optional().describe(`Set the parent Progress object for the Progress object to determine its relationship graph.`),
+    progress_hold: z.object({
+        progress:OptionProgressObjectSchema,
+        operation:ProgressOperationSchema,
+        bHold: z.boolean().describe('If True, make sure that only the current transaction signer completes the operation; ' + 
+            'If False, other authorized operators can complete the operation.'),
+        adminUnhold: z.boolean().optional().describe('If the signer of the current transaction is the relevant authority in the Machine, '+
+            'it can cancel the operation that is uniformly owned by one operator.'),
+    }).optional().describe('Sole possession or unpossession of the current operation of the Progress object. ' + 
+        'It is used when an operation may take a long time and does not require the participation of more people.' + 
+        'Simple and quick operations ignore this setting.'), 
+    progress_task: z.object({
+        progress:ProgressObjectSchema,
+        task_address:z.string().nonempty().describe(`The task that the Progress object performs, such as an Order object address.
+            Once a task for the Progress object is set, it cannot be changed again.`
+        ),
+    }).optional().describe("Set the task of a Progress object. A Progress object can be set only once, for example, an Order object."),   
+    progress_next: z.object({
+        progress: ProgressObjectSchema,
+        operation:ProgressOperationSchema,
+        deliverable: z.object({
+            msg: z.string().describe('The log or message that completes the operation.'),
+            orders: z.array(MarkNameSchema).describe('List of purchase orders in the supply chain.')
+        }).describe('Submission information to complete the operation.'),
+    }).optional().describe('Complete a process step in the Progress and submit the corresponding deliverables.'),    
+
     description: z.string().optional().describe('Description of the Machine object'),
     endpoint: z.string().optional().describe('HTTPS endpoint of the Machine object.' + 
         "The Endpoint provides a view that allows the Machine's Progress to integrate complex operations at each node to complete a commit. " + 
         "If there are complex Guard condition validations, it is recommended to use an Endpoint to simplify operator operations.",
     ),
-    consensus_repository: RepositoryOperationSchema.optional().describe('consensus repository operations.'),
+    consensus_repository: ObjectsOperationSchema.optional().describe('Set and manage consensus repositories for data sharing. Note: The parameter must be a Repository object address.'),
     nodes: z.union([
         z.object({
             op:z.literal('add'),
@@ -291,81 +342,6 @@ export const CallMachineDataSchema = z.object({
     ]).optional().describe('Nodes and their operations.'),
     bPublished:z.boolean().optional().describe('Publish the Machine object. ' + 
         'If True, Machine will allow its Progress object to be created, and data such as Machine nodes cannot be changed again. If False, it is ignored.'),
-    progress_new: z.object({
-        task_address:z.string().nonempty().optional().describe('The task that the Progress object performs, such as an Order object address.' + 
-            'Once a task for the Progress object is set, it cannot be changed again.'
-        ),
-        namedNew: NamedObjectSchema.optional().describe('Newly named Progress object.'),
-        }).optional().describe('Create a new Progress object for the Machine object. ' + 
-            'The new Progress uses the processes, operations, and permissions already defined by the Machine object.' + 
-            'If the Machine Object is not published, the creation fails.'),
-    progress_context_repository: z.object({
-        progress:z.string().optional().describe('The address of the Progress object.' + 
-            'If undefined, the newly created Progress object in the current transaction is used.'
-        ),
-        repository:z.string().optional().describe('The address of the Repository object.' + 
-            'If undefined, unset the context repository for the Progress object.'
-        ),
-    }).optional().describe('Set or unset the context repository for the Progress object.'),
-    progress_namedOperator: z.object({
-        progress:z.string().optional().describe('The address of the Progress object.' + 
-            'If undefined, the newly created Progress object in the current transaction is used.'
-        ),
-        data:z.array(z.object({
-            name:z.string().nonempty().describe('The namespace defined in the Machine node.'),
-            operators:z.array(z.string().nonempty()).describe('Operator addresses.')
-        })).describe('A list of operator addresses for different namespaces')
-    }).optional().describe("Add the operator addresses to the namespace defined by the Machine node, " + 
-        "so that these operators have corresponding operation permissions in the Progress. " + 
-        "The namespace of each Progress created by Machine is independent, and its operator Settings are independent of each other."),
-    progress_parent: z.object({
-        progress:z.string().optional().describe('The address of the Progress object.' + 
-            'If undefined, the newly created Progress object in the current transaction is used.'
-        ),
-        parent:z.object({
-            parent_id: z.string().nonempty().describe('The address of the parent Progress object.'),
-            parent_session_id: z.number().int().min(0).describe('A number in the parent Progress object session list. '+ 
-                'The session number of each node of the Progress object is different. Each number corresponds sequentially to each of its working nodes.' + 
-                'The initial node session number is 0, and its value increases by 1 for each working node.'
-            ),
-            operation: ProgressOperationSchema
-        }).optional().describe('The parent Progress object and the session operation it performs.')
-    }).optional().describe("Set the parent Progress object for the Progress object to determine its relationship graph."),
-    progress_task: z.object({
-        progress:z.string().optional().describe('The address of the Progress object.' + 
-            'If undefined, the newly created Progress object in the current transaction is used.'
-        ),
-        task:z.string().nonempty().describe('The task that the Progress object performs, such as an Order object address.' + 
-            'Once a task for the Progress object is set, it cannot be changed again.'
-        ),
-    }).optional().describe("Set the task of a Progress object. A Progress object can be set only once, for example, an Order object."),   
-    progress_hold: z.object({
-        progress:z.string().optional().describe('The address of the Progress object.' + 
-            'If undefined, the newly created Progress object in the current transaction is used.'
-        ),
-        operation:ProgressOperationSchema,
-        bHold: z.boolean().describe('If True, make sure that only the current transaction signer completes the operation; ' + 
-            'If False, other authorized operators can complete the operation.'),
-        adminUnhold: z.boolean().optional().describe('If the signer of the current transaction is the relevant authority in the Machine, '+
-            'it can cancel the operation that is uniformly owned by one operator.'),
-    }).optional().describe('Sole possession or unpossession of the current operation of the Progress object. ' + 
-        'It is used when an operation may take a long time and does not require the participation of more people.' + 
-        'Simple and quick operations ignore this setting.'), 
-    progress_next: z.object({
-        progress:z.string().describe('The address of the Progress object.' + 
-            'If undefined, the newly created Progress object in the current transaction is used.'
-        ),
-        operation:ProgressOperationSchema,
-        deliverable: z.object({
-            msg: z.string().describe('The log or message that completes the operation.'),
-            orders: z.array(z.object({
-                object: z.string().nonempty().describe('The address of the Order object.'),
-                pay_token_type: z.string().nonempty().describe('The payment token type of the order.'),
-            })).describe('The operation generates orders in the supply chain.')
-        }).describe('Submission information to complete the operation.'),
-        guard:z.string().optional().describe('Specify the Guard to validate.'+ 'If not specified, the Settings are automatically fetched from the chain.' + 
-            'If the guard of the operation is set, the operator must meet the condition verification of the Guard in order to successfully complete the operation.')
-    }).optional().describe('Complete an operation.'),    
     bPaused: z.boolean().optional().describe('If Machine is already published, the creation of new Progress is paused if True, and new Progress is allowed if False. ' + 
         'The generated Progress is not affected.'),
     clone_new: z.object({
@@ -375,17 +351,8 @@ export const CallMachineDataSchema = z.object({
 }).describe('Data definition that operates on the on-chain Machine object. The operations are performed one after the other in the field order.'); 
 
 export const CallPermissionDataSchema = z.object({
-    object: CallObjectSchema.optional().describe('Modify the existing Permission object or build a new one.'),
+    object: z.union([MarkNameSchema, NamedObjectSchema]).describe(`'The on-chain object to be operated on, which can be an existing object referenced by address, or a newly created on-chain object with its address is named and tagged.'`),
     description: z.string().optional().describe('Description of the Permission object.'),
-    admin: z.union([
-        z.object({
-            op: z.union([z.literal('add'), z.literal('remove'), z.literal('set')]),
-            addresses:z.array(z.string()).describe('Addresses')
-        }).describe('Add, delete, and set an administrator address list.'),
-        z.object({
-            op:z.literal('removeall')
-        }).describe('Delete all Administrators')
-    ]).optional().describe('To manage the administrator list, only the builder of the Permission object has permission to operate it.'),
     biz_permission: z.union([
         z.object({
             op: z.literal('add'),
@@ -405,7 +372,7 @@ export const CallPermissionDataSchema = z.object({
         z.object({
             op:z.literal('add entity'),
             entities:z.array(z.object({
-                address: z.string().nonempty().describe('The address'),
+                address: AccountOrMarkNameSchema,
                 permissions: z.array(z.object({
                     index: PermissionIndexSchema,
                     guard: z.string().nonempty().optional().describe('The address of the Guard object.' + 
@@ -419,7 +386,7 @@ export const CallPermissionDataSchema = z.object({
             permissions:z.array(z.object({
                 index: PermissionIndexSchema,
                 entities: z.array(z.object({
-                    address: z.string().nonempty().describe('The address'),
+                    address: AccountOrMarkNameSchema,
                     guard: z.string().nonempty().optional().describe('The address of the Guard object.' + 
                         'If set, to exercise of this permission, the address must also meet guard authentication conditions.'
                     )
@@ -428,38 +395,55 @@ export const CallPermissionDataSchema = z.object({
         }).describe('Add addresses for permissions'),
         z.object({
             op:z.literal('remove entity'),
-            addresses:z.array(z.string().nonempty().describe('The address'))
+            addresses:z.array(AccountOrMarkNameSchema).describe('Delete addresses and its permissions from the Permission Object.' )
         }).describe('Delete addresses and its permissions from the Permission Object. Administrator addresses is not affected.'),
         z.object({
             op:z.literal('remove permission'),
-            address:z.string().nonempty().describe('The address'),
+            address:AccountOrMarkNameSchema,
             index: z.array(PermissionIndexSchema),
         }).describe('Remove some permissions for an address'),
         z.object({
             op:z.literal('transfer permission'),
-            from_address:z.string().nonempty().describe('The address where all permissions need to be transferred'),
-            to_address: z.string().nonempty().describe('The address that accepts the transferred permissions'),
+            from: AccountOrMarkNameSchema,
+            to: AccountOrMarkNameSchema,
         }).describe('Transfer all permissions from one address to another. ' + 
             'The address for receiving permissions must be the new address of the Permission object.'),
     ]).optional().describe('Personnel address and permission assignment.'),
-    builder: z.string().nonempty().optional().describe('Modify the builder address.' + 
+    admin: z.union([
+        z.object({
+            op: z.union([z.literal('add'), z.literal('remove'), z.literal('set')]),
+            addresses:z.array(AccountOrMarkNameSchema)
+        }).describe('Add, delete, and set an administrator address list.'),
+        z.object({
+            op:z.literal('removeall')
+        }).describe('Delete all Administrators')
+    ]).optional().describe('To manage the administrator list, only the builder of the Permission object has permission to operate it.'),
+    builder: AccountOrMarkNameSchema.describe('Modify the builder address.' + 
         'The Builder is the highest Permission object owner and has only one address.' + 
         'The default is the address of the signer of the transaction that created the Permission object.')
 }).describe('Data definition that operates on the  on-chain Permission object. The operations are performed one after the other in the field order.');
 
+export const RepositoryAddressID = z.union([
+    z.number().int().min(0).describe(`A positive integer that can be converted to an address (e.g., time number)`),
+    z.bigint().describe('A positive integer that can be converted to an address (e.g., time number)'),
+    AccountOrMarkNameSchema
+]).describe('The AddressID used to query Repository data, which can be an address, an address corresponding to the name of a local account or local mark, or an address converted from a positive integer (e.g., a time number).');
+
+export const PayParamSchema = z.object({
+    index: z.union([
+        z.number().int().min(0).describe(''),
+        z.bigint(),
+        z.string().nonempty(),
+    ]).describe('The index of the payment record.'),
+    remark: z.string().describe(`The notes for the payment.`),
+    for_object: z.string().nonempty().optional().describe(`${MarkName_Address_Description} The address of the object related to the purpose of the payment.`),
+    for_guard: z.string().nonempty().optional().describe(`${MarkName_Address_Description} The address of the Guard object associated with the payment purpose.`),
+}).describe('Payment parameters.');
+
 export const CallRepositoryDataSchema = z.object({
-    object: CallObjectSchema.optional().describe('Modify the existing Repository object or build a new one.'),
-    permission: CallObjectWithDescriptionSchema.optional().describe('Specify Permission object that manages rights or build a new one.'),
+    object: ObjectMainSchema,
     description: z.string().optional().describe('Description of the Repository object.'),
-    reference: z.union([
-        z.object({
-            op: z.union([z.literal('add'), z.literal('remove'), z.literal('set')]),
-            addresses:z.array(z.string()).describe('Addresses')
-        }).describe('Add, delete, and set an reference address list.'),
-        z.object({
-            op:z.literal('removeall')
-        }).describe('Remove all reference addresses.')
-    ]).optional().describe('Manage and set the Repository object to be used by other wowok objects.'),
+    reference: ObjectsOperationSchema.optional().describe('Declare the list of other objects that use this Repository. '),
     mode:z.union([
         z.literal(WOWOK.Repository_Policy_Mode.POLICY_MODE_FREE).describe('Relax mode'),
         z.literal(WOWOK.Repository_Policy_Mode.POLICY_MODE_STRICT).describe('Strict mode'),
@@ -500,14 +484,14 @@ export const CallRepositoryDataSchema = z.object({
                 z.object({
                     key: z.string().nonempty().describe('The field name'),
                     data: z.array(z.object({
-                        address: z.string().nonempty().describe('The address.'),
+                        address: RepositoryAddressID,
                         bcsBytes: SafeUint8ArraySchema.describe('The data.'),
                         value_type: ValueTypeSchema.optional()
                     }).describe('Under the data field, the data corresponding to the address. If value_type is defined, bcsBytes is the raw data. ' + 
                         'If value_type is not defined, the first byte of bscBytes represents value_type, followed by the raw data.'))
                 }).describe('Under the data field, different data(including wowok data type:ValueTypeSchema) corresponding to different addresses.'),
                 z.object({
-                    address: z.string().nonempty().describe('The address'),
+                    address: RepositoryAddressID,
                     data: z.array(z.object({
                         key:z.string().nonempty().describe('The field name'),
                         bcsBytes: SafeUint8ArraySchema.describe('The data.'),
@@ -521,7 +505,7 @@ export const CallRepositoryDataSchema = z.object({
             op:z.literal('remove'),
             data: z.array(z.object({
                 key: z.string().nonempty().describe('The field name'),
-                address: z.string().nonempty().describe('The address'),
+                address: RepositoryAddressID
             }))
         }).describe('Remove data from the Repository object. Each piece of data is uniquely identified by a field name and an address.')
     ]).optional().describe('Add or remove data to the Repository object.' + 
@@ -529,41 +513,21 @@ export const CallRepositoryDataSchema = z.object({
 }).describe('Data definition that operates on the on-chain Repository object. The operations are performed one after the other in the field order.');
 
 export const CallArbitrationDataSchema = z.object({
-    type_parameter: z.string().describe("The type of token paid for the Arbitration object. For example, 0x2::sui::SUI."),
-    object: CallObjectSchema.optional().describe('Modify the existing Arbitration object or build a new one.'),
-    permission: CallObjectWithDescriptionSchema.optional().describe('Specify Permission object that manages rights or build a new one'),
-    description: z.string().optional().describe('Description of the Arbitration object'),
-    endpoint: z.string().optional().describe('HTTPS endpoint of the Arbitration object.' + 
-        "Used to exchange non-public information or large-capacity information in some special scenarios."
-    ),
-    fee: TokenBalanceSchema.optional().describe('The cost of initiating the arbitration. 0 or undefined means the arbitration is free of charge.'),
-    fee_treasury: CallObjectWithDescriptionSchema.optional().describe('Specify a Treasury object to receive arbitration fees, or create a new Treasury object.'),
+    object: ObjectTypedMainSchema,
     arb_new: z.object({
         data: z.object({
             order: z.string().nonempty().describe('The address of the Order object.'),
-            order_token_type: z.string().nonempty().describe('The payment token type of the order.'),
             description:  z.string().describe('Bifurcation description.'),
             votable_proposition: z.array(z.string()).describe('Claim of rights and interests.'+
                 'Each interest and claim shall be as clear as possible to facilitate the arbitration body to vote on them separately.'),
-            fee: TokenBalanceSchema
+            max_fee: TokenBalanceSchema.optional().describe('The maximum amount of arbitration fees that can be paid by the singer of the transaction. undefined means paying the arbitration fees as declared in the Arbitration.'),
         }),
-        guard:z.string().optional().describe('Specify the Guard to validate. If not specified, the Settings are automatically fetched from the chain.'),
-        namedNew: NamedObjectSchema.optional().describe('Newly named Arb object.'),
+        namedNew: NamedObjectSchema.optional().describe('Naming the address of a newly created Arb object.'),
     }).optional().describe('Create a new Arb object.'),
     arb_withdraw_fee:z.object({
-        arb:z.string().optional().describe('The address of the Arb object.' + 
-            'If undefined, the newly created Arb object in the current transaction is used.'
-        ),
-        data: z.object({
-            treasury:z.string().describe('The address of the Treasury object.' + 
-                'The value must be the same as fee_treasury of Arbitration.'
-            ),
-            index: PaymentIndexSchema.default(0),
-            remark: PaymentRemarkSchema.default(''),
-            for_object: PaymentForObjectSchema,
-            for_guard: PaymentForGuardSchema,
-        })
-    }).optional().describe('Extract arbitration fees from the Arb object to the specific Treasury object.'),
+        arb:z.string().describe(`${MarkName_Address_Description} The address of the Arb object.`),
+        data: PayParamSchema.describe('Withdraw parameters.'),
+    }).optional().describe(`Extract arbitration fees from the Arb object to the specific Treasury object(Arbitration's fee_treasury field).`),
     arb_vote:z.object({
         arb:z.string().optional().describe('The address of the Arb object.' + 
             'If undefined, the newly created Arb object in the current transaction is used.'
@@ -577,17 +541,24 @@ export const CallArbitrationDataSchema = z.object({
             'If undefined, the newly created Arb object in the current transaction is used.'
         ),
         feedback: z.string().describe('A written description or feedback of the arbitration result.'),
-        indemnity: z.union([z.number().int().min(0), z.string()]).optional().describe('Indemnity determined by arbitration')
+        indemnity: z.union([z.number().int().min(0), z.string().nonempty()]).optional().describe('Indemnity determined by arbitration')
     }).optional().describe('Arbitrate the Arb object. ' + 
         'The order holder may withdraw the corresponding amount from the Order object with indemnity of the Arb object.'),
+    
+    description: z.string().optional().describe('Description of the Arbitration object'),
+    endpoint: z.string().optional().describe('HTTPS endpoint of the Arbitration object.' + 
+        "Used to exchange non-public information or large-capacity information in some special scenarios."
+    ),
+    fee: TokenBalanceSchema.optional().describe('The cost of initiating the arbitration. 0 or undefined means the arbitration is free of charge.'),
+    fee_treasury: ObjectParamSchema.optional().describe('Specify a Treasury object to receive arbitration fees, or create a new Treasury object.'),
     guard:z.string().nonempty().optional().describe('The address of the Guard object.' + 
         'If set, the authentication conditions of this Guard must be met when an Arb object is created.'),
     voting_guard: z.union([
         z.object({
             op:z.union([z.literal('add'), z.literal('set')]),
             data: z.array(z.object({
-                guard: z.string().nonempty().describe('The address of the Guard object.'),
-                voting_weight: z.union([z.number().int().min(1), z.string()]).describe('Voting weight.')
+                guard: z.string().nonempty().describe(`${MarkName_Address_Description} The address of the Guard object.`),
+                voting_weight: z.union([z.number().int().min(1), z.string().nonempty()]).describe('Voting weight.').default(1)
             })).describe('Each Guard object corresponds to a vote weight.' + 
                 'If a certain Guard authentication is passed, the vote weight corresponding to the Guard is cast.')
         }).describe('Adds or sets the vote Guard and its vote weight.'),
@@ -604,50 +575,45 @@ export const CallArbitrationDataSchema = z.object({
     bPaused:z.boolean().optional().describe('If True, new Arb objects are allowed to be created; if False, no new Arb objects are allowed to be created.'),
 }).describe('Data definition that operates on the on-chain Arbitration object. The operations are performed one after the other in the field order.'); 
 
+export const ReceiverParamSchema = z.object({
+    address: AccountOrMarkNameSchema,
+    amount: TokenBalanceSchema,
+}).describe(`The recipient's address and payment amount.`);
+
+export const TreasuryWithdrawParamSchema = PayParamSchema.extend({
+    receiver: z.array(ReceiverParamSchema),
+    withdraw_guard: MarkNameSchema.optional().describe(`${MarkName_Address_Description} Use this Withdraw Guard for withdrawal. undefined indicates using the signer's account permissions for withdrawal.`)
+});
+
 export const CallTreasuryDataSchema = z.object({
-    type_parameter: z.string().describe("The type of token for the Treasury object. For example, 0x2::sui::SUI."),
-    object: CallObjectSchema.optional().describe('Modify the existing Treasury object or build a new one.'),
-    permission: CallObjectWithDescriptionSchema.optional().describe('Specify Permission object that manages rights or build a new one'),
-    description: z.string().optional().describe('Description of the Treasury object'),
+    object: ObjectTypedMainSchema,
     deposit: z.object({
-        data: z.object({
-            balance:TokenBalanceSchema,
-            index: PaymentIndexSchema.default(0).optional(),
-            remark: PaymentRemarkSchema.optional(),
-            for_object: PaymentForObjectSchema.optional(),
-            for_guard: PaymentForGuardSchema.optional()
-        }),
-        guard: z.string().optional().describe('Specify the address of the Guard object. If not specified, the Settings are automatically fetched from the chain.'),
-    }).optional().describe('Make a deposit to the Treasury object.'),
-    receive: z.object({
-        payment: z.string().nonempty().describe('The address of the Payment object.'),
-        received_object: z.string().nonempty().describe('The address of the Receiving<CoinWrapper<T>> object that received by the Treasury object.'),
-    }).describe('Records the money received by the Treasury object.'),
-    withdraw: z.object({
-        items: z.array(z.object({
-            address: z.string().nonempty().describe('The address'),
-            amount: TokenBalanceSchema
-        })).describe('All addresses and the amount they received.'),
-        index: PaymentIndexSchema.default(0),
-        remark: PaymentRemarkSchema.default(''),
-        for_object: PaymentForObjectSchema,
-        for_guard: PaymentForGuardSchema,
-        withdraw_guard: z.string().nonempty().optional().describe('The address of the Guard object.'),
-    }).optional().describe('Transfer withdrawals from Treasury object to addresses.'),
-    deposit_guard: z.string().nonempty().optional().describe('The address of the Guard object. ' + 
+        balance:TokenBalanceSchema,
+        param: PayParamSchema.optional().describe('deposit parameters.'),
+    }).optional().describe('Deposit to the Treasury'),
+    receive: z.union([
+        z.object({
+            received_objects: z.array(MarkNameSchema),
+        }).describe(`Lists of the Treasury_ReceivedObject objects that received by the Treasury object.`),
+        z.literal('recently').describe('Lists of the Treasury_ReceivedObject objects that received by the Treasury object in the last 50 transactions.')
+    ]).describe(`Deposit the received payment objects into the Treasury.`),
+    withdraw: TreasuryWithdrawParamSchema.describe(`Perform withdrawal operations via Withdraw Guard verification, or via the signer's withdrawal authority.`),
+
+    description: z.string().optional().describe('Description of the Treasury object'),
+    deposit_guard: MarkNameSchema.optional().describe('The address of the Guard object. ' + 
         'If set, a deposit to the Treasury object needs to be authenticated by this Guard to succeed.'
     ),
     withdraw_guard: z.union([
         z.object({
             op:z.union([z.literal('add'), z.literal('set')]),
             data: z.array(z.object({
-                guard: z.string().nonempty().describe('The address of the Guard object.'),
+                guard: MarkNameSchema.describe('The address of the Guard object.'),
                 amount: TokenBalanceSchema
             })).describe('Each Guard object corresponds to a maximum withdrawal amount.')
         }).describe('Adds or sets the withdraw Guard and its maximum withdrawal amount.'),
         z.object({
             op:z.literal('remove'),
-            guards: z.array(z.string().nonempty()).describe('Addresses of the Guard objects')
+            guards: z.array(MarkNameSchema).describe('Addresses of the Guard objects')
         }).describe('Remove withdraw guards.'),
         z.object({
             op:z.literal('removeall'),
@@ -664,16 +630,61 @@ export const CallTreasuryDataSchema = z.object({
     ]),
 }).describe('Data definition that operates on the on-chain Treasury object. The operations are performed one after the other in the field order.'); 
 
+const ServiceWithdrawSchema = PayParamSchema.extend({
+    withdraw_guard: MarkNameSchema.describe(`${MarkName_Address_Description} Use this Withdraw Guard for withdrawal.`)
+});
 export const CallServiceDataSchema = z.object({
-    type_parameter: z.string().describe("The type of token for the Service object. For example, 0x2::sui::SUI."),
-    object: CallObjectSchema.optional().describe('Modify the existing Service object or build a new one.'),
-    permission: CallObjectWithDescriptionSchema.optional().describe('Specify Permission object that manages rights or build a new one'),
+    object: ObjectTypedMainSchema,
+    order_new:z.object({
+        buy_items: z.array(z.object({
+            item: z.string().nonempty().describe('Goods name'),
+            max_price: z.union([z.string(), z.number().int().min(0)]).describe('Max price of the goods'),
+            count: z.union([z.string(), z.number().int().min(0)]).describe('Quantity of goods to be purchased'),
+        })).describe('Goods to be purchased.'),
+        discount_object: MarkNameSchema.optional().describe('The address of the Discount object that signer owned.'),
+        customer_info_required: z.string().nonempty().optional().describe('customer information required for the order. '),
+        namedNewOrder:NamedObjectSchema.optional().describe('Newly named Order object.'),
+        namedNewProgress: NamedObjectSchema.optional().describe('Newly named Progress object.'),
+    }).optional().describe('Purchase products/services, complete payment to generate an Order.'),
+    order_agent: z.object({
+        order: MarkNameSchema.optional().describe('The address of the Order object.' + 
+            'If undefined, the newly created Order object in the current transaction is used.'
+        ),
+        agents: z.array(AccountOrMarkNameSchema).describe('Set the order operation agents, who will be granted order operation permissions.'),
+    }).optional().describe('Set up an agent for the order. The agent may exercise the power on behalf of the order owner.'),
+    order_required_info: z.object({
+        order: MarkNameSchema.describe('The address of the Order object.' + 
+            'If undefined, the newly created Order object in the current transaction is used.'
+        ),
+        customer_info_required: z.string().nonempty().optional().describe('customer information required for the order. '),
+    }).optional().describe('Set or change encrypted order-sensitive information.'),
+    order_refund: z.union([
+        z.object({
+                order: MarkNameSchema.describe('The address of the Order object.' ),
+                arb: MarkNameSchema.describe('The address of the Arb object.'),
+            }).describe('Refund through the Arb object'), 
+        z.object({
+            order: MarkNameSchema.describe('The address of the Order object.' ),
+            refund_guard: MarkNameSchema.describe('The address of the refund Guard object'),
+        }).describe('Refund from the order. If the Arb field is specified, refund based on the Arb arbitration result; if the refund_guard field is specified, withdraw after passing the refund_guard verification.'), 
+    ]),
+    order_withdrawl: z.object({
+        order: MarkNameSchema.describe('The address of the Order object.'),
+        data: ServiceWithdrawSchema.describe('Withdraw parameters.'),
+    }).optional().describe('Service provider withdraws funds from the order after passing withdraw_guard verification.'),
+    order_payer: z.object({
+        order: MarkNameSchema.optional().describe('The address of the Order object.' + 
+            'If undefined, the newly created Order object in the current transaction is used.'
+        ),
+        payer_new: AccountOrMarkNameSchema,
+    }).optional().describe('Set the new owner of the order, who will have all the rights to the order. This operation must be performed by the original owner of the order to succeed.'),
+
     description: z.string().optional().describe('Description of the Service object'),
     endpoint: z.string().optional().describe('HTTPS endpoint of the Service object.' + 
         "Used to Provide additional information for the product."),
-    payee_treasury: CallObjectWithDescriptionSchema.optional().describe('Specify a Treasury object to receive sales revenue, or create a new Treasury object.'),
+    payee_treasury: ObjectParamSchema.optional().describe('Specify a Treasury object to receive sales revenue, or create a new Treasury object.'),
     gen_discount: z.array(z.object({
-        receiver: z.string().nonempty().describe('The address to receive the discount coupon.'),
+        receiver: AccountOrMarkNameSchema.describe(`${AccountOrMarkNameDescription} The address to receive the discount coupon.`),
         count: z.number().int().min(1).default(1).describe('The number of discount coupons.'),
         discount: z.object({
             name: z.string().default('').describe('The name of the coupon.'),
@@ -687,42 +698,12 @@ export const CallServiceDataSchema = z.object({
             price_greater: z.union([z.number().int().min(0), z.string()]).optional().describe('Discount effective condition: the amount is greater than or equal to this value.')
         })
     })).optional().describe('Send discount coupons to the addresses.'),
-    repository: RepositoryOperationSchema.optional().describe('consensus repository operations.'),
-    extern_withdraw_treasury: z.union([
-        z.object({
-            op:z.union([z.literal('add'), z.literal('set')]),
-            treasuries: z.array(z.object({
-                address: z.string().nonempty().describe('The address of the Treasury object.'),
-                token_type: z.string().nonempty().describe('The payment token type of the Treasury object.'),
-            }))
-        }).describe('Add or set treasuries.'),
-        z.object({
-            op:z.literal('remove'),
-            addresses: z.array(z.string().nonempty().describe('The address of the Treasury object.'))
-        }).describe('Remove treasuries.'),
-        z.object({
-            op:z.literal('removeall'),
-        }).describe('Remove all treasuries.'),
-    ]).optional().describe(`Manage external withdrawal treasuries for the Service object.  
+    repository: ObjectsOperationSchema.optional().describe('Set and manage consensus repositories for data sharing. Note: The parameter must be Repository object address.'),
+    extern_withdraw_treasury: ObjectsOperationSchema.optional().describe(`Manage external withdrawal treasuries for the Service object. Note: The parameter must be Treasury object address. 
         The mode of these treasuries must be ${WOWOK.Treasury_WithdrawMode.GUARD_ONLY_AND_IMMUTABLE}, that is, withdrawals can only be made through guards. 
         These treasuries can be used for Service object default payouts, additional rewards, and other scenarios.`),
-    machine: z.string().nonempty().optional().describe('The address of the Machine object, used to provide process consensus for a Service object.'),
-    arbitration: z.union([
-        z.object({
-            op:z.union([z.literal('add'), z.literal('set')]),
-            arbitrations: z.array(z.object({
-                address: z.string().nonempty().describe('The address of the Arbitration object.'),
-                token_type: z.string().nonempty().describe('The payment token type of the Arbitration object.'),
-            }))
-        }).describe('Add or set Arbitration objects.'),
-        z.object({
-            op:z.literal('remove'),
-            addresses: z.array(z.string().nonempty().describe('The address of the Arbitration object.'))
-        }).describe('Remove Arbitration objects.'),
-        z.object({
-            op:z.literal('removeall'),
-        }).describe('Remove all Arbitration objects.'),
-    ]).optional().describe(`Manage arbitrations for the Service object. Arbitration object is used to provide dispute arbitration for orders.`),
+    machine: MarkNameSchema.optional().describe('The address of the Machine object, used to provide process consensus for a Service object.'),
+    arbitration: ObjectsOperationSchema.optional().describe(`Set and manage Arbitrations, stating that when a dispute occurs in an order, the service provider complies with the compensation rulings of these Arbitrations. Note: The parameter must be Arbitration object address.`),
     customer_required_info: z.object({
         pubkey: z.string().nonempty().describe('The public key for encrypting the order information.'),
         required_info: z.array(z.union([
@@ -752,74 +733,7 @@ export const CallServiceDataSchema = z.object({
     refund_guard: GuardPercentSchema.optional().describe('Management refund guards.'),
     bPublished:z.boolean().optional().describe('Publish the Service object. ' + 
         'If True, The Service object will allow its Order object to be created, and data such as the Machine, Withdraw guards, Refund guards, etc. cannot be changed again. If False, it is ignored.'),
-    order_new:z.object({
-        buy_items: z.array(z.object({
-            item: z.string().nonempty().describe('Goods name'),
-            max_price: z.union([z.string(), z.number().int().min(0)]).describe('Max price of the goods'),
-            count: z.union([z.string(), z.number().int().min(0)]).describe('Quantity of goods to be purchased'),
-        })).describe('Goods to be purchased.'),
-        discount: z.string().nonempty().optional().describe('The address of the Discount object.'),
-        machine: z.string().nonempty().optional().describe('The address of the Machine object. The value must be the same as the value of the machine field of the Service object.'),
-        customer_info_crypto: OrderCryptoInfoSchema,
-        guard: z.string().optional().describe('Specify the Guard to validate. If not specified, the Settings are automatically fetched from the chain.'),
-        namedNewOrder:NamedObjectSchema.optional().describe('Newly named Order object.'),
-        namedNewProgress: NamedObjectSchema.optional().describe('Newly named Progress object.'),
-    }).optional().describe('Purchase products/services, complete payment to generate an Order.'),
-    order_agent: z.object({
-        order: z.string().optional().describe('The address of the Order object.' + 
-            'If undefined, the newly created Order object in the current transaction is used.'
-        ),
-        agents: z.array(z.string().describe('The address of the agent.')),
-        progress: z.string().optional().describe('The address of the Progress object.' + 
-            'If undefined, the newly created Progress object in the current transaction is used.'
-        ),
-    }).optional().describe('Set up an agent for the order. The agent may exercise the power on behalf of the order owner.'),
-    order_required_info: z.object({
-        order: z.string().optional().describe('The address of the Order object.' + 
-            'If undefined, the newly created Order object in the current transaction is used.'
-        ),
-        info: OrderCryptoInfoSchema
-    }).optional().describe('Set or change encrypted order-sensitive information.'),
-    order_refund: z.union([
-        z.object({
-            order: z.string().optional().describe('The address of the Order object.' + 
-                'If undefined, the newly created Order object in the current transaction is used.'
-            ),
-            guard: z.string().optional().describe('The address of the refund Guard object.')
-        }).describe('Refund through the refund guard.'),
-        z.object({
-            order: z.string().optional().describe('The address of the Order object.' + 
-                'If undefined, the newly created Order object in the current transaction is used.'
-            ),
-            arb: z.string().nonempty().describe('The address of the Arb object.'),
-            arb_token_type:z.string().nonempty().describe('The token type of the Arb object.'),
-        }).describe('Refund through the Arb object.')
-    ]).optional().describe('Refund of order'),
-    order_withdrawl: z.object({
-        order: z.string().optional().describe('The address of the Order object.' + 
-            'If undefined, the newly created Order object in the current transaction is used.'
-        ),
-        data: z.object({
-            withdraw_guard: z.string().nonempty().describe('The address of the withdraw guard object.'),
-            treasury: z.string().nonempty().describe('The address of the Treasury object.' + 
-                'The value must be consistent with the payee_treasury field of the Service object.'
-            ),
-            index: PaymentIndexSchema,
-            remark: PaymentRemarkSchema,
-            for_object: PaymentForObjectSchema,
-            for_guard: PaymentForGuardSchema,
-        })
-    }).optional().describe('Make a withdrawal on the order'),
-    order_payer: z.object({
-        order: z.string().optional().describe('The address of the Order object.' + 
-            'If undefined, the newly created Order object in the current transaction is used.'
-        ),
-        progress: z.string().optional().describe('The address of the Progress object.' + 
-            'If undefined, the newly created Progress object in the current transaction is used.'
-        ),
-        payer_new: z.string().nonempty().describe('The new owner address of the Order object.'),
-    }).optional().describe('Transfer ownership of the order to another address.'),
-    buy_guard: z.string().nonempty().optional().describe('The address of the Guard object. ' + 
+    buy_guard: MarkNameSchema.optional().describe('The address of the Guard object. ' + 
         'If set, generating new orders must be authenticated by this Guard to succeed.'),
     bPaused:z.boolean().optional().describe('If True, new Order objects are allowed to be created; if False, no new Order objects are allowed to be created.'),
     clone_new: z.object({
@@ -841,7 +755,7 @@ export const CallPersonalDataSchema = z.object({
         z.object({
             op: z.literal('add'),
             data: z.array(z.object({
-                address: z.string().nonempty().describe('The address'),
+                address: AccountOrMarkNameSchema,
                 name: z.string().optional().describe('The name for the address.'),
                 tags: z.array(z.string().nonempty().describe('Tags for the address.')).optional()
             }).describe('Name and Tag an address.'))
@@ -849,21 +763,21 @@ export const CallPersonalDataSchema = z.object({
         z.object({
             op: z.literal('remove'),
             data: z.array(z.object({
-                address: z.string().nonempty().describe('The address'),
+                address: AccountOrMarkNameSchema,
                 tags: z.array(z.string().nonempty().describe('Tags for the address.')).optional()
             }))
         }).describe('Remove tags for the addresses'),
         z.object({
             op: z.literal('removeall'),
-            addresses: z.array(z.string().nonempty().describe('Addresses'))
+            addresses: z.array(AccountOrMarkNameSchema)
         }).describe('These addresses are no longer marked.'),
         z.object({
             op: z.literal('transfer'),
-            address: z.string().nonempty().describe('The address that will receive my marked address information.')
+            to: AccountOrMarkNameSchema.describe('The address that will receive my marked address information.')
         }).describe('Transfer my marked addresses information to someone else'),
         z.object({
             op: z.literal('replace'),
-            address: z.string().nonempty().describe('The address of the Resource object.')
+            mark_object: MarkNameSchema.describe('The address of the Resource object.')
         }).describe('Replace new marked addresses information by the owner.'),
         z.object({
             op: z.literal('destroy'),
