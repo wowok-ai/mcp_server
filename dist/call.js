@@ -614,7 +614,7 @@ export const CallServiceDataSchema = z.object({
             order: MarkNameSchema.describe('The address of the Order object.'),
             refund_guard: MarkNameSchema.describe('The address of the refund Guard object'),
         }).describe('Refund from the order. If the Arb field is specified, refund based on the Arb arbitration result; if the refund_guard field is specified, withdraw after passing the refund_guard verification.'),
-    ]),
+    ]).optional().describe('Refund from the order. If the Arb field is specified, refund based on the Arb arbitration result; if the refund_guard field is specified, withdraw after passing the refund_guard verification.'),
     order_withdrawl: z.object({
         order: MarkNameSchema.describe('The address of the Order object.'),
         data: ServiceWithdrawSchema.describe('Withdraw parameters.'),

@@ -645,19 +645,19 @@ export const CallServiceDataSchema = z.object({
         customer_info_required: z.string().nonempty().optional().describe('customer information required for the order. '),
         namedNewOrder:NamedObjectSchema.optional().describe('Newly named Order object.'),
         namedNewProgress: NamedObjectSchema.optional().describe('Newly named Progress object.'),
-    }).nullable().optional().describe('Purchase products/services, complete payment to generate an Order.'),
+    }).optional().describe('Purchase products/services, complete payment to generate an Order.'),
     order_agent: z.object({
         order: MarkNameSchema.optional().describe('The address of the Order object.' + 
             'If undefined, the newly created Order object in the current transaction is used.'
         ),
         agents: z.array(AccountOrMarkNameSchema).describe('Set the order operation agents, who will be granted order operation permissions.'),
-    }).nullable().optional().describe('Set up an agent for the order. The agent may exercise the power on behalf of the order owner.'),
+    }).optional().describe('Set up an agent for the order. The agent may exercise the power on behalf of the order owner.'),
     order_required_info: z.object({
         order: MarkNameSchema.describe('The address of the Order object.' + 
             'If undefined, the newly created Order object in the current transaction is used.'
         ),
         customer_info_required: z.string().nonempty().optional().describe('customer information required for the order. '),
-    }).nullable().optional().describe('Set or change encrypted order-sensitive information.'),
+    }).optional().describe('Set or change encrypted order-sensitive information.'),
     order_refund: z.union([
         z.object({
                 order: MarkNameSchema.describe('The address of the Order object.' ),
@@ -667,22 +667,22 @@ export const CallServiceDataSchema = z.object({
             order: MarkNameSchema.describe('The address of the Order object.' ),
             refund_guard: MarkNameSchema.describe('The address of the refund Guard object'),
         }).describe('Refund from the order. If the Arb field is specified, refund based on the Arb arbitration result; if the refund_guard field is specified, withdraw after passing the refund_guard verification.'), 
-    ]).nullable().optional().describe('Refund from the order. If the Arb field is specified, refund based on the Arb arbitration result; if the refund_guard field is specified, withdraw after passing the refund_guard verification.'),
+    ]).optional().describe('Refund from the order. If the Arb field is specified, refund based on the Arb arbitration result; if the refund_guard field is specified, withdraw after passing the refund_guard verification.'),
     order_withdrawl: z.object({
         order: MarkNameSchema.describe('The address of the Order object.'),
         data: ServiceWithdrawSchema.describe('Withdraw parameters.'),
-    }).nullable().optional().describe('Service provider withdraws funds from the order after passing withdraw_guard verification.'),
+    }).optional().describe('Service provider withdraws funds from the order after passing withdraw_guard verification.'),
     order_payer: z.object({
         order: MarkNameSchema.optional().describe('The address of the Order object.' + 
             'If undefined, the newly created Order object in the current transaction is used.'
         ),
         payer_new: AccountOrMarkNameSchema,
-    }).nullable().optional().describe('Set the new owner of the order, who will have all the rights to the order. This operation must be performed by the original owner of the order to succeed.'),
+    }).optional().describe('Set the new owner of the order, who will have all the rights to the order. This operation must be performed by the original owner of the order to succeed.'),
 
-    description: z.string().nullable().optional().describe('Description of the Service object'),
-    endpoint: z.string().nullable().optional().describe('HTTPS endpoint of the Service object.' + 
+    description: z.string().optional().describe('Description of the Service object'),
+    endpoint: z.string().optional().describe('HTTPS endpoint of the Service object.' + 
         "Used to Provide additional information for the product."),
-    payee_treasury: ObjectParamSchema.nullable().optional().describe('Specify a Treasury object to receive sales revenue, or create a new Treasury object.'),
+    payee_treasury: ObjectParamSchema.optional().describe('Specify a Treasury object to receive sales revenue, or create a new Treasury object.'),
     gen_discount: z.array(z.object({
         receiver: AccountOrMarkNameSchema.describe(`${AccountOrMarkNameDescription} The address to receive the discount coupon.`),
         count: z.number().int().min(1).default(1).describe('The number of discount coupons.'),
@@ -697,13 +697,13 @@ export const CallServiceDataSchema = z.object({
             time_start: z.number().int().optional().describe('Discount coupon effective time(ms). undefined if the current time.'),
             price_greater: z.union([z.number().int().min(0), z.string()]).optional().describe('Discount effective condition: the amount is greater than or equal to this value.')
         })
-    })).nullable().optional().describe('Send discount coupons to the addresses.'),
-    repository: ObjectsOperationSchema.nullable().optional().describe('Set and manage consensus repositories for data sharing. Note: The parameter must be Repository object address.'),
-    extern_withdraw_treasury: ObjectsOperationSchema.nullable().optional().describe(`Manage external withdrawal treasuries for the Service object. Note: The parameter must be Treasury object address. 
+    })).optional().describe('Send discount coupons to the addresses.'),
+    repository: ObjectsOperationSchema.optional().describe('Set and manage consensus repositories for data sharing. Note: The parameter must be Repository object address.'),
+    extern_withdraw_treasury: ObjectsOperationSchema.optional().describe(`Manage external withdrawal treasuries for the Service object. Note: The parameter must be Treasury object address. 
         The mode of these treasuries must be ${WOWOK.Treasury_WithdrawMode.GUARD_ONLY_AND_IMMUTABLE}, that is, withdrawals can only be made through guards. 
         These treasuries can be used for Service object default payouts, additional rewards, and other scenarios.`),
-    machine: MarkNameSchema.nullable().optional().describe('The address of the Machine object, used to provide process consensus for a Service object.'),
-    arbitration: ObjectsOperationSchema.nullable().optional().describe(`Set and manage Arbitrations, stating that when a dispute occurs in an order, the service provider complies with the compensation rulings of these Arbitrations. Note: The parameter must be Arbitration object address.`),
+    machine: MarkNameSchema.optional().describe('The address of the Machine object, used to provide process consensus for a Service object.'),
+    arbitration: ObjectsOperationSchema.optional().describe(`Set and manage Arbitrations, stating that when a dispute occurs in an order, the service provider complies with the compensation rulings of these Arbitrations. Note: The parameter must be Arbitration object address.`),
     customer_required_info: z.object({
         pubkey: z.string().nonempty().describe('The public key for encrypting the order information.'),
         required_info: z.array(z.union([
@@ -713,7 +713,7 @@ export const CallServiceDataSchema = z.object({
             z.literal(WOWOK.BuyRequiredEnum.name).describe('User name'),
             z.string().nonempty().describe('Other user information'),
         ])).describe('The type of user information to be encrypted')
-    }).nullable().optional().describe(''),
+    }).optional().describe(''),
     sales: z.union([
         z.object({
             op:z.literal('add'),
@@ -728,18 +728,18 @@ export const CallServiceDataSchema = z.object({
             op:z.literal('remove'),
             sales_name: z.array(z.string().nonempty().describe('Goods name'))
         }).describe('Remove goods')
-    ]).nullable().optional().describe('Manage the sale of goods'),
-    withdraw_guard:GuardPercentSchema.nullable().optional().describe('Management withdraw guards.'),
-    refund_guard: GuardPercentSchema.nullable().optional().describe('Management refund guards.'),
-    bPublished:z.boolean().nullable().optional().describe('Publish the Service object. ' + 
+    ]).optional().describe('Manage the sale of goods'),
+    withdraw_guard:GuardPercentSchema.optional().describe('Management withdraw guards.'),
+    refund_guard: GuardPercentSchema.optional().describe('Management refund guards.'),
+    bPublished:z.boolean().optional().describe('Publish the Service object. ' + 
         'If True, The Service object will allow its Order object to be created, and data such as the Machine, Withdraw guards, Refund guards, etc. cannot be changed again. If False, it is ignored.'),
-    buy_guard: MarkNameSchema.optional().nullable().describe('The address of the Guard object. ' + 
+    buy_guard: MarkNameSchema.optional().describe('The address of the Guard object. ' + 
         'If set, generating new orders must be authenticated by this Guard to succeed.'),
-    bPaused:z.boolean().nullable().optional().describe('If True, new Order objects are allowed to be created; if False, no new Order objects are allowed to be created.'),
+    bPaused:z.boolean().optional().describe('If True, new Order objects are allowed to be created; if False, no new Order objects are allowed to be created.'),
     clone_new: z.object({
         token_type_new: z.string().optional().describe("The new type of token for the Service object."),
         namedNew:NamedObjectSchema.optional().describe('Newly named Service object.'),
-    }).nullable().optional().describe('Clone a new Service object. Inheriting the original Settings (but not published yet), and could change the type of payment token.'),
+    }).optional().describe('Clone a new Service object. Inheriting the original Settings (but not published yet), and could change the type of payment token.'),
 }).describe('Data definition that operates on the on-chain Service object. The operations are performed one after the other in the field order.'); 
 
 export const CallPersonalDataSchema = z.object({
