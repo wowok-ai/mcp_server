@@ -1,6 +1,6 @@
 {
   "name": "wowok_mcp",
-  "version": "1.2.22",
+  "version": "1.2.23",
   "description": "MCP server for WoWok: Unlock Co-Creation, Lighting Transaction, Empower Potential.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
