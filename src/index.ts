@@ -2,7 +2,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport,  } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListResourcesRequestSchema, ListResourceTemplatesRequestSchema, ListToolsRequestSchema, 
     ReadResourceRequestSchema, ResourceTemplate, Tool, ToolSchema, Resource } from "@modelcontextprotocol/sdk/types.js";
-import { z } from "zod";
+import { date, z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { query_objects, WOWOK, query_events, query_permission, query_table, call_guard, call_demand, call_machine, 
   call_service, call_treasury, queryTableItem_ServiceSale, queryTableItem_DemandService,  
@@ -18,28 +18,28 @@ import { query_objects, WOWOK, query_events, query_permission, query_table, call
 import { QueryObjectsSchema, QueryEventSchema, QueryPermissionSchema, QueryTableItemsSchema, QueryPersonalSchema, QueryTableItemSchema, 
   QueryByAddressNameSchema, QueryByIndexSchema, QueryByNameSchema, QueryByAddressSchema,
   QueryObjectsSchemaDescription, QueryPermissionSchemaDescription, QueryPersonalSchemaDescription, QueryEventSchemaDescription,
-  Demand_TableItems_List_Description, Arb_TableItems_List_Description, Machine_TableItems_List_Description,
-  PersonalMark_TableItems_List_Description, Permission_TableItems_List_Description, Repository_TableItems_List_Description,
-  Progress_TableItems_List_Description, Treasury_TableItems_List_Description, Service_TableItems_List_Description,
-  QueryDemandTableItemsSchema, QueryArbTableItemsSchema, QueryMachineTableItemsSchema,
-  QueryServiceTableItemsSchema, QueryProgressTableItemsSchema, QueryRepositoryTableItemsSchema,
-  QueryTreasuryTableItemsSchema, QueryPersonalMarkTableItemsSchema, QueryPermissionTableItemsSchema,
   Query_TableItems_List_Description, Arb_TableItem_Description, Demand_TableItem_Description,
   Machine_TableItem_Description, PersonalMark_TableItem_Description, Permission_TableItem_Description,
   Repository_TableItem_Description, Progress_TableItem_Description, Service_TableItem_Description,
   Treasury_TableItem_Description,
   QueryTreasuryReceivedSchema,
-  Treasury_ReceivedObject_Description, 
+  Treasury_ReceivedObject_Description,
+  QueryTableItemSchemaDescription, 
 } from './query.js';
 import { CallArbitrationSchema, CallArbitrationSchemaDescription, CallDemandSchema, CallDemandSchemaDescription, CallGuardSchema, CallGuardSchemaDescription, CallMachineSchema, CallMachineSchemaDescription, CallObejctPermissionSchema,
     CallObejctPermissionSchemaDescription,
     CallPermissionSchema, CallPermissionSchemaDescription, CallPersonalSchema, CallPersonalSchemaDescription, CallRepositorySchema, CallRepositorySchemaDescription, CallServiceSchema, CallServiceSchemaDescription, CallTreasurySchema,
     CallTreasurySchemaDescription,
+    OperateSchema,
+    OperateSchemaDescription,
  } from "./call.js";
 import { parseUrlParams } from "./util.js"; 
 import { AccountListSchemaDescription, AccountListSchema, AccountOperationSchema, LocalInfoListSchema, LocalInfoListSchemaDescription, LocalInfoOperationSchema, LocalMarkFilterSchema, LocalMarkFilterSchemaDescription, 
     LocalMarkOperationSchema, QueryAccountSchema, QueryAccountSchemaDescription, QueryLocalInfoSchema, QueryLocalInfoSchemaDescription, QueryLocalMarkSchema, QueryLocalMarkSchemaDescription, AccountOperationSchemaDescription, LocalInfoOperationSchemaDescription, LocalMarkOperationSchemaDescription, 
-    localMarkListDescription} from "./local.js";
+    localMarkListDescription,
+    LocalSchemaDescription,
+    LocalSchema} from "./local.js";
+import { ERROR, Errors } from "../../wowok/dist/exception.js";
 
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
@@ -90,6 +90,9 @@ export enum ToolName {
     QUERY_REPOSITORY_DATA = 'repository_table_item_query',
     QUERY_PERSONAL_MARK = 'personalmark_table_item_query',
     QUERY_TREASURY_RECEIVE = 'treasury_receive_query',
+    TOOLS_OP = 'operations',
+    QUERY_TABLE_ITEM = 'table_item_query',
+    QUERY_LOCAL = 'local_query',
 }
 
 WOWOK.Protocol.Instance().use_network(WOWOK.ENTRYPOINT.testnet);
@@ -180,57 +183,9 @@ const RESOURCES_TEMPL: ResourceTemplate[] = [
         mimeType:'text/plain'
     },
     {
-        uriTemplate: `wowok://${ToolName.QUERY_DEMAND_SERVICE_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_DEMAND_SERVICE_LIST,
-        description: Demand_TableItems_List_Description,
-        mimeType:'text/plain'
-    },
-    {
-        uriTemplate: `wowok://${ToolName.QUERY_ARB_VOTING_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_ARB_VOTING_LIST,
-        description: Arb_TableItems_List_Description,
-        mimeType:'text/plain',
-    },
-    {
-        uriTemplate: `wowok://${ToolName.QUERY_MACHINE_NODE_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_MACHINE_NODE_LIST,
-        description: Machine_TableItems_List_Description,
-        mimeType:'text/plain',
-    },
-    {
-        uriTemplate: `wowok://${ToolName.QUERY_PERSONAL_MARK_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_PERSONAL_MARK_LIST,
-        description: PersonalMark_TableItems_List_Description,
-        mimeType:'text/plain',
-    },
-    {
-        uriTemplate: `wowok://${ToolName.QUERY_PERMISSION_ENTITY_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_PERMISSION_ENTITY_LIST,
-        description: Permission_TableItems_List_Description,
-        mimeType:'text/plain',
-    },
-    {
-        uriTemplate: `wowok://${ToolName.QUERY_REPOSITORY_DATA_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_REPOSITORY_DATA_LIST,
-        description: Repository_TableItems_List_Description,
-        mimeType:'text/plain',
-    },
-    {
-        uriTemplate: `wowok://${ToolName.QUERY_PROGRESS_HISTORY_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_PROGRESS_HISTORY_LIST,
-        description: Progress_TableItems_List_Description,
-        mimeType:'text/plain',
-    },
-    {
-        uriTemplate: `wowok://${ToolName.QUERY_TREASURY_HISTORY_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_TREASURY_HISTORY_LIST,
-        description: Treasury_TableItems_List_Description,
-        mimeType:'text/plain',
-    },
-    {
-        uriTemplate: `wowok://${ToolName.QUERY_SERVICE_SALE_LIST}/{?parent, cursor, limit, no_cache}`,
-        name: ToolName.QUERY_SERVICE_SALE_LIST,
-        description: Service_TableItems_List_Description,
+        uriTemplate: `wowok://${ToolName.QUERY_TABLE_ITEMS_LIST}/{?parent, cursor, limit, no_cache}`,
+        name: ToolName.QUERY_TABLE_ITEMS_LIST,
+        description: Query_TableItems_List_Description,
         mimeType:'text/plain',
     },
     {
@@ -303,105 +258,20 @@ const RESOURCES_TEMPL: ResourceTemplate[] = [
 
 const TOOLS: Tool[] = [
     {
+        name: ToolName.TOOLS_OP,
+        description: OperateSchemaDescription,
+        inputSchema: zodToJsonSchema(OperateSchema)  as ToolInput,
+    },
+    {
         name: ToolName.QUERY_OBJECTS,
         description: QueryObjectsSchemaDescription,
         inputSchema: zodToJsonSchema(QueryObjectsSchema)  as ToolInput,
+    },    
+    {
+        name: ToolName.QUERY_LOCAL,
+        description: LocalSchemaDescription,
+        inputSchema: zodToJsonSchema(LocalSchema)  as ToolInput,
     },
-    {
-        name: ToolName.QUERY_LOCAL_MARK_LIST,
-        description: LocalMarkFilterSchemaDescription,
-        inputSchema: zodToJsonSchema(LocalMarkFilterSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_LOCAL_INFO_LIST,
-        description: LocalInfoListSchemaDescription,
-        inputSchema: zodToJsonSchema(LocalInfoListSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_ACCOUNT_LIST,
-        description: AccountListSchemaDescription,
-        inputSchema: zodToJsonSchema(AccountListSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_LOCAL_MARK,
-        description: QueryLocalMarkSchemaDescription,
-        inputSchema: zodToJsonSchema(QueryLocalMarkSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_LOCAL_INFO,
-        description: QueryLocalInfoSchemaDescription,
-        inputSchema: zodToJsonSchema(QueryLocalInfoSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_ACCOUNT,
-        description: QueryAccountSchemaDescription,
-        inputSchema: zodToJsonSchema(QueryAccountSchema)  as ToolInput,
-    }, 
-    {
-        name: ToolName.OP_SERVICE,
-        description: CallServiceSchemaDescription,
-        inputSchema: zodToJsonSchema(CallServiceSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_PERSONAL,
-        description: CallPersonalSchemaDescription,
-        inputSchema: zodToJsonSchema(CallPersonalSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_PERMISSION,
-        description: CallPermissionSchemaDescription,
-        inputSchema: zodToJsonSchema(CallPermissionSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_REPOSITORY,
-        description: CallRepositorySchemaDescription,
-        inputSchema: zodToJsonSchema(CallRepositorySchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_MACHINE,
-        description: CallMachineSchemaDescription,
-        inputSchema: zodToJsonSchema(CallMachineSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_GUARD,
-        description: CallGuardSchemaDescription,
-        inputSchema: zodToJsonSchema(CallGuardSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_ARBITRATION,
-        description: CallArbitrationSchemaDescription,
-        inputSchema: zodToJsonSchema(CallArbitrationSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_TREASURY,
-        description: CallTreasurySchemaDescription,
-        inputSchema: zodToJsonSchema(CallTreasurySchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_DEMAND,
-        description: CallDemandSchemaDescription,
-        inputSchema: zodToJsonSchema(CallDemandSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.OP_LOCAL_MARK,
-        inputSchema: zodToJsonSchema(LocalMarkOperationSchema)  as ToolInput,
-        description: LocalMarkOperationSchemaDescription,
-    }, 
-    {
-        name: ToolName.OP_LOCAL_INFO,
-        inputSchema: zodToJsonSchema(LocalInfoOperationSchema)  as ToolInput,
-        description: LocalInfoOperationSchemaDescription,
-    },
-    {
-        name: ToolName.OP_ACCOUNT,
-        inputSchema: zodToJsonSchema(AccountOperationSchema)  as ToolInput,
-        description: AccountOperationSchemaDescription,
-    },
-    {
-        name: ToolName.OP_REPLACE_PERMISSION_OBJECT,
-        inputSchema: zodToJsonSchema(CallObejctPermissionSchema)  as ToolInput,
-        description: CallObejctPermissionSchemaDescription,
-    }, 
     {
         name: ToolName.QUERY_PERMISSIONS,
         description: QueryPermissionSchemaDescription,
@@ -418,46 +288,6 @@ const TOOLS: Tool[] = [
         inputSchema: zodToJsonSchema(QueryEventSchema)  as ToolInput,
     },
     {
-        name: ToolName.QUERY_DEMAND_SERVICE_LIST,
-        description: Demand_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryDemandTableItemsSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_ARB_VOTING_LIST,
-        description: Arb_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryArbTableItemsSchema)  as ToolInput,
-    },    
-    {
-        name: ToolName.QUERY_MACHINE_NODE_LIST,
-        description: Machine_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryMachineTableItemsSchema)  as ToolInput,
-    },    
-    {
-        name: ToolName.QUERY_SERVICE_SALE_LIST,
-        description: Service_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryServiceTableItemsSchema)  as ToolInput,
-    },    {
-        name: ToolName.QUERY_PROGRESS_HISTORY_LIST,
-        description: Progress_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryProgressTableItemsSchema)  as ToolInput,
-    },    {
-        name: ToolName.QUERY_REPOSITORY_DATA_LIST,
-        description: Repository_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryRepositoryTableItemsSchema)  as ToolInput,
-    },    {
-        name: ToolName.QUERY_TREASURY_HISTORY_LIST,
-        description: Treasury_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryTreasuryTableItemsSchema)  as ToolInput,
-    },    {
-        name: ToolName.QUERY_PERSONAL_MARK_LIST,
-        description: PersonalMark_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryPersonalMarkTableItemsSchema)  as ToolInput,
-    },    {
-        name: ToolName.QUERY_PERMISSION_ENTITY_LIST,
-        description: Permission_TableItems_List_Description,
-        inputSchema: zodToJsonSchema(QueryPermissionTableItemsSchema)  as ToolInput,
-    },
-    {
         name: ToolName.QUERY_PERSONAL,
         description: QueryPermissionSchemaDescription,
         inputSchema: zodToJsonSchema(QueryPersonalSchema)  as ToolInput,
@@ -466,51 +296,11 @@ const TOOLS: Tool[] = [
         name: ToolName.QUERY_TREASURY_RECEIVE,
         description: Treasury_ReceivedObject_Description,
         inputSchema: zodToJsonSchema(QueryTreasuryReceivedSchema)  as ToolInput,
-    },
+    },    
     {
-        name: ToolName.QUERY_TREASURY_HISTORY,
-        description: Treasury_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_SERVICE_SALE,
-        description: Service_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_ARB_VOTING,
-        description: Arb_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_DEMAND_SERVICE,
-        description: Demand_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_MACHINE_NODE,
-        description: Machine_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByNameSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_PERSONAL_MARK,
-        description:PersonalMark_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_PERMISSION_ENTITY,
-        description: Permission_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByAddressSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_REPOSITORY_DATA,
-        description: Repository_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByAddressNameSchema)  as ToolInput,
-    },
-    {
-        name: ToolName.QUERY_PROGRESS_HISTORY,
-        description: Progress_TableItem_Description,
-        inputSchema: zodToJsonSchema(QueryByIndexSchema)  as ToolInput,
+        name: ToolName.QUERY_TABLE_ITEM,
+        description: QueryTableItemSchemaDescription,
+        inputSchema: zodToJsonSchema(QueryTableItemSchema)  as ToolInput,
     },
 ]
 
@@ -729,16 +519,7 @@ async function main() {
                 };
             }
             
-            case ToolName.QUERY_TABLE_ITEMS_LIST:
-            case ToolName.QUERY_ARB_VOTING_LIST: 
-            case ToolName.QUERY_DEMAND_SERVICE_LIST:
-            case ToolName.QUERY_MACHINE_NODE_LIST:
-            case ToolName.QUERY_SERVICE_SALE_LIST:
-            case ToolName.QUERY_PROGRESS_HISTORY_LIST:
-            case ToolName.QUERY_REPOSITORY_DATA_LIST:
-            case ToolName.QUERY_TREASURY_HISTORY_LIST:
-            case ToolName.QUERY_PERSONAL_MARK_LIST:
-            case ToolName.QUERY_PERMISSION_ENTITY_LIST: {
+            case ToolName.QUERY_TABLE_ITEMS_LIST: {
                 const args = QueryTableItemsSchema.parse(request.params.arguments);
                 const r = await query_table(args);
                 return {
@@ -746,6 +527,59 @@ async function main() {
                 };
             }
             
+            case ToolName.QUERY_TABLE_ITEM: {
+                const args = QueryTableItemSchema.parse(request.params.arguments);
+                switch (args.query.name) {
+                    case 'arb': 
+                        const arb = QueryByAddressSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await queryTableItem_ArbVoting(arb)) }],
+                        };
+                    case "treasury":
+                        const treasury = QueryByIndexSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await queryTableItem_TreasuryHistory(treasury)) }],
+                        };
+                    case "service":
+                        const service = QueryByNameSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await queryTableItem_ServiceSale(service)) }],
+                        };
+                    case "demand":
+                        const demand = QueryByAddressSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await queryTableItem_DemandService(demand)) }],
+                        };
+                    case "machine":
+                        const machine = QueryByNameSchema.parse(args.query.data);
+                        return {
+                          content: [{ type: "text", text: JSON.stringify(await queryTableItem_MachineNode(machine)) }],
+                        };
+                    case "personalmark":
+                        const personalmark = QueryByAddressSchema.parse(args.query.data);
+                        return {
+                          content: [{ type: "text", text: JSON.stringify(await queryTableItem_MarkTag(personalmark)) }],
+                        };
+                    case "permission":
+                        const permission = QueryByAddressSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await queryTableItem_PermissionEntity(permission)) }],
+                        };
+                    case "repository":
+                        const repository = QueryByAddressNameSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await queryTableItem_RepositoryData(repository)) }],
+                        };
+                    case "progress":
+                        const progress = QueryByIndexSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await queryTableItem_ProgressHistory(progress)) }],
+                        };
+                    default: 
+                        ERROR(Errors.InvalidParam, 'Invalid table item query name')
+                }
+            }
+
             case ToolName.QUERY_TREASURY_RECEIVE: {
                 const args = QueryTreasuryReceivedSchema.parse(request.params.arguments);
                 const r = await query_treasury_received(args);
@@ -754,230 +588,116 @@ async function main() {
                 };
             }
 
-            case ToolName.QUERY_ARB_VOTING: {
-              const args = QueryByAddressSchema.parse(request.params.arguments);
-              const r = await queryTableItem_ArbVoting(args);
-              return {
-                content: [{ type: "text", text: JSON.stringify(r) }],
-              };
-            }
-      
-            case ToolName.QUERY_MACHINE_NODE: {
-                const args = QueryByNameSchema.parse(request.params.arguments);
-                const r = await queryTableItem_MachineNode(args);
-                return {
-                  content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-      
-            case ToolName.QUERY_PERSONAL_MARK: {
-                const args = QueryByAddressSchema.parse(request.params.arguments);
-                const r = await queryTableItem_MarkTag(args);
-                return {
-                  content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.QUERY_PERMISSION_ENTITY: {
-                const args = QueryByAddressSchema.parse(request.params.arguments);
-                const r = await queryTableItem_PermissionEntity(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-      
-            case ToolName.QUERY_PROGRESS_HISTORY: {
-                const args = QueryByIndexSchema.parse(request.params.arguments);
-                const r = await queryTableItem_ProgressHistory(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-      
-            case ToolName.QUERY_TREASURY_HISTORY: {
-                const args = QueryByIndexSchema.parse(request.params.arguments);
-                const r = await queryTableItem_TreasuryHistory(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.QUERY_REPOSITORY_DATA: {
-                const args = QueryByAddressNameSchema.parse(request.params.arguments);
-                const r = await queryTableItem_RepositoryData(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-      
-            case ToolName.QUERY_SERVICE_SALE: {
-                const args = QueryByNameSchema.parse(request.params.arguments);
-                const r = await queryTableItem_ServiceSale(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-      
-            case ToolName.QUERY_DEMAND_SERVICE: {
-                const args = QueryByAddressSchema.parse(request.params.arguments);
-                const r = await queryTableItem_DemandService(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.QUERY_LOCAL_MARK_FILTER: {
-                const args = LocalMarkFilterSchema.parse(request.params.arguments);
-                const r = await query_local_mark_list(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.QUERY_LOCAL_INFO_LIST: {
-                const r = await query_local_info_list();
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.QUERY_ACCOUNT_LIST: {
-                const args = AccountListSchema.parse(request.params.arguments);
-                const r = await query_account_list(args?.showSuspendedAccount);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.QUERY_LOCAL_MARK: {
-                const args = QueryLocalMarkSchema.parse(request.params.arguments);
-                const r = await query_local_mark(args.name);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
+            case ToolName.QUERY_LOCAL: {
+                const args = LocalSchema.parse(request.params.arguments);
+                switch(args.query.name) {
+                    case "account_list": 
+                        const account_list = AccountListSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await query_account_list(account_list?.showSuspendedAccount)) }],
+                        };
+                    case "info_list":
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await query_local_info_list()) }],
+                        };
+                    case "mark_list":
+                        const mark_list = LocalMarkFilterSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await query_local_mark_list(mark_list)) }],
+                        };
+                    case "account":
+                        const account = QueryAccountSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await query_account(account)) }],
+                        }
+                    case "mark":
+                        const mark = QueryLocalMarkSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await query_local_mark(mark.name)) }],
+                        }
+                    case "info":
+                        const info = QueryLocalInfoSchema.parse(args.query.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await query_local_info(info.name)) }],
+                        }
+                    default:
+                        ERROR(Errors.InvalidParam, 'Invalid local query name')
                 }
             }
 
-            case ToolName.QUERY_LOCAL_INFO: {
-                const args = QueryLocalInfoSchema.parse(request.params.arguments);
-                const r = await query_local_info(args.name);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
+            case ToolName.TOOLS_OP: {
+                const args = OperateSchema.parse(request.params.arguments);
+                switch(args.call.name) {
+                    case "account": 
+                        const account = AccountOperationSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await account_operation(account)) }],
+                        };
+                    case 'mark':
+                        const mark = LocalMarkOperationSchema.parse(args.call.data);
+                        await local_mark_operation(mark);
+                        return {
+                            content: [{ type: "text", text: 'success'}],
+                        };
+                    case 'info':
+                        const info = LocalInfoOperationSchema.parse(args.call.data);    
+                        await local_info_operation(info);       
+                        return {
+                            content: [{ type: "text", text: 'success'}],
+                        };  
+                    case "demand":
+                        const demand = CallDemandSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_demand(demand)) }],
+                        };
+                    case "permission":
+                        const permission = CallPermissionSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_permission(permission)) }],
+                        };
+                    case "service":
+                        const service = CallServiceSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_service(service)) }],
+                        };
+                    case "guard":
+                        const guard = CallGuardSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_guard(guard)) }],
+                        };
+                    case "repository":
+                        const repository = CallRepositorySchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_repository(repository)) }],
+                        };
+                    case "machine":
+                        const machine = CallMachineSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_machine(machine)) }],
+                        };
+                    case "arbitration":
+                        const arbitration = CallArbitrationSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_arbitration(arbitration)) }],
+                        };
+                    case "treasury":
+                        const treasury = CallTreasurySchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_treasury(treasury)) }],
+                        };
+                    case "personal":
+                        const personal = CallPersonalSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_personal(personal))}],
+                        };
+                    case "object_permission":
+                        const object_permission = CallObejctPermissionSchema.parse(args.call.data);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(await call_transfer_permission(object_permission)) }],
+                        };
+                    default:
+                        ERROR(Errors.InvalidParam, 'Invalid call name')
                 }
-            }
-
-            case ToolName.QUERY_ACCOUNT: {
-                const args = QueryAccountSchema.parse(request.params.arguments);
-                const r = await query_account(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                }
-            }
-
-            case ToolName.OP_GUARD: {
-                const args = CallGuardSchema.parse(request.params.arguments);
-                const r = await call_guard(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-      
-            case ToolName.OP_DEMAND: {
-                const args = CallDemandSchema.parse(request.params.arguments);
-                const r = await call_demand(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-      
-            case ToolName.OP_MACHINE: {
-                const args = CallMachineSchema.parse(request.params.arguments);
-                const r = await call_machine(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.OP_SERVICE: {
-                const args = CallServiceSchema.parse(request.params.arguments);
-                const r = await call_service(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.OP_TREASURY: {
-                const args = CallTreasurySchema.parse(request.params.arguments);
-                const r = await call_treasury(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.OP_ARBITRATION: {
-                const args = CallArbitrationSchema.parse(request.params.arguments);
-                const r = await call_arbitration(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.OP_PERMISSION: {
-                const args = CallPermissionSchema.parse(request.params.arguments);
-                server.sendLoggingMessage({level:'info', message:JSON.stringify(args)})
-                const r = await call_permission(args);
-                server.sendLoggingMessage({level:'info', message:JSON.stringify(r)})
-
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-      
-            case ToolName.OP_PERSONAL: {
-                const args = CallPersonalSchema.parse(request.params.arguments);
-                const r = await call_personal(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.OP_REPLACE_PERMISSION_OBJECT: {
-                const args = CallObejctPermissionSchema.parse(request.params.arguments);
-                const r = await call_transfer_permission(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.OP_REPOSITORY: {
-                const args = CallRepositorySchema.parse(request.params.arguments);
-                const r = await call_repository(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
-            }
-
-            case ToolName.OP_LOCAL_MARK: {
-                const args = LocalMarkOperationSchema.parse(request.params.arguments);
-                await local_mark_operation(args);
-                return {
-                    content: [{ type: "text", text: 'success'}],
-                };
-            }
-
-            case ToolName.OP_LOCAL_INFO: {
-                const args = LocalInfoOperationSchema.parse(request.params.arguments);    
-                await local_info_operation(args);       
-                return {
-                    content: [{ type: "text", text: 'success'}],
-                };  
-            }
-
-            case ToolName.OP_ACCOUNT: {
-                const args = AccountOperationSchema.parse(request.params.arguments);
-                const r = await account_operation(args);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(r) }],
-                };
             }
 
             default:
