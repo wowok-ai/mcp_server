@@ -236,12 +236,14 @@ async function main() {
         {
             name: A.ToolName.OP_LOCAL_MARK,
             description: A.LocalMarkOperationSchemaDescription,
-            inputSchema: A.LocalInfoOperationSchemaInput()  as ToolInput,
+            inputSchema: A.LocalMarkOperationSchemaInput()  as ToolInput,
+
         },
         {
             name: A.ToolName.OP_ACCOUNT,
             description: A.AccountOperationSchemaDescription,
-            inputSchema: A.LocalInfoOperationSchemaInput()  as ToolInput,
+            inputSchema: A.AccountOperationSchemaInput()  as ToolInput,
+
         },
         {
             name: A.ToolName.OP_PERMISSION,
