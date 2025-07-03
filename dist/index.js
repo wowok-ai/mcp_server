@@ -7,7 +7,7 @@ A.WOWOK.Protocol.Instance().use_network(A.WOWOK.ENTRYPOINT.testnet);
 // Create server instance
 const server = new Server({
     name: "wowok",
-    version: "1.1.14",
+    version: "1.3.30",
     description: `WoWok is a web3 collaboration protocol that enables users to create, collaborate, and transact on their own terms. It provides a set of tools and services that allow users to build and manage their own decentralized applications (dApps) and smart contracts.
     This server provides a set of tools and resources for querying and managing on-chain objects, events, and permissions in the WoWok protocol. It allows users to interact with the blockchain and perform various operations such as querying objects, events, permissions, and personal information, as well as performing on-chain operations like creating or updating objects, managing permissions, and more.
     It also provides local operations for managing your accounts and personal marks and information, allowing users to store and retrieve personal data securely on their devices.`,
@@ -156,8 +156,8 @@ const RESOURCES_TEMPL = [
         mimeType: 'text/plain'
     },
     {
-        uriTemplate: 'wowok://treasury_received/{?treasury_object, limit, order}',
-        name: A.ToolName.QUERY_TREASURY_RECEIVED,
+        uriTemplate: 'wowok://received/{?object, limit, order}',
+        name: A.ToolName.QUERY_RECEIVED,
         description: A.QueryEventSchemaDescription,
         mimeType: 'text/plain'
     }
@@ -200,9 +200,9 @@ async function main() {
             inputSchema: A.QueryPersonalSchemaInput(),
         },
         {
-            name: A.ToolName.QUERY_TREASURY_RECEIVED,
-            description: A.Treasury_ReceivedObject_Description,
-            inputSchema: A.QueryTreasuryReceivedSchemaInput(),
+            name: A.ToolName.QUERY_RECEIVED,
+            description: A.ReceivedObject_Description,
+            inputSchema: A.QueryReceivedSchemaInput(),
         },
         {
             name: A.ToolName.QUERY_TABLE_ITEM,
@@ -386,7 +386,7 @@ async function main() {
         }
         else if (uri_lower.startsWith("wowok://treasury_received/")) {
             const query = A.parseUrlParams(uri);
-            return { tools: [], contents: [{ uri: uri, text: JSON.stringify(await A.query_treasury_received(query)) }] };
+            return { tools: [], contents: [{ uri: uri, text: JSON.stringify(await A.query_received(query)) }] };
         }
         else if (uri_lower.startsWith('wowok://local_mark/filter/')) {
             const query = A.parseUrlParams(uri);
@@ -522,9 +522,9 @@ async function main() {
                             A.WOWOK.ERROR(A.WOWOK.Errors.InvalidParam, 'Invalid table item query name');
                     }
                 }
-                case A.ToolName.QUERY_TREASURY_RECEIVED: {
-                    const args = A.QueryTreasuryReceivedSchema.parse(request.params.arguments);
-                    const r = await A.query_treasury_received(args);
+                case A.ToolName.QUERY_RECEIVED: {
+                    const args = A.QueryReceivedSchema.parse(request.params.arguments);
+                    const r = await A.query_received(args);
                     return {
                         content: [{ type: "text", text: JSON.stringify(r) }],
                     };
