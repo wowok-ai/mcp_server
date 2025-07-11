@@ -17,7 +17,7 @@ A.WOWOK.Protocol.Instance().use_network(A.WOWOK.ENTRYPOINT.testnet);
 // Create server instance
 const server = new Server({
     name: "wowok",
-    version: "1.2.34",
+    version: "1.2.35",
     description: `WoWok is a web3 collaboration protocol that enables users to create, collaborate, and transact on their own terms. It provides a set of tools and services that allow users to build and manage their own decentralized applications (dApps) and smart contracts.
     This server provides a set of tools and resources for querying and managing on-chain objects, events, and permissions in the WoWok protocol. It allows users to interact with the blockchain and perform various operations such as querying objects, events, permissions, and personal information, as well as performing on-chain operations like creating or updating objects, managing permissions, and more.
     It also provides local operations for managing your accounts and personal marks and information, allowing users to store and retrieve personal data securely on their devices.`,
@@ -483,7 +483,7 @@ async function main() {
               const r = await A.query_objects(args);
               const output = A.ObjectsUrlMaker(r.objects ? r.objects.map(v=>v.object) : []);
               return {
-                content: [{ type: "text", text: JSON.stringify({objects:output, raw_data:JSON.stringify(r)}) }]
+                content: [{ type: "text", text: JSON.stringify({objects:output, raw_data:r}) }]
               };
             }
       
@@ -531,7 +531,7 @@ async function main() {
                 }
                 const output = A.UrlResultMaker(r?.object);
                 return {
-                    content: [{ type: "text", text: JSON.stringify({objects:[output], raw_data:JSON.stringify(r)}) }]
+                    content: [{ type: "text", text: JSON.stringify({objects:[output], raw_data:r}) }]
                 };
             }
             
@@ -647,7 +647,7 @@ async function main() {
                 const r = await A.call_personal(args);
                 const output = A.UrlResultMaker(addr);
                 return {
-                    content: [{ type: "text", text: JSON.stringify({objects:[output], raw_data:JSON.stringify(r)}) }]
+                    content: [{ type: "text", text: JSON.stringify({objects:[output], raw_data:r}) }]
                 };
             }
 
