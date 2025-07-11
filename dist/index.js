@@ -4,6 +4,7 @@ import { StdioServerTransport, } from "@modelcontextprotocol/sdk/server/stdio.js
 import { CallToolRequestSchema, ListResourcesRequestSchema, ListResourceTemplatesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema, ToolSchema } from "@modelcontextprotocol/sdk/types.js";
 import * as A from 'wowok_agent';
 const ToolInputSchema = ToolSchema.shape.inputSchema;
+const ToolOutputSchema = ToolSchema.shape.outputSchema;
 A.WOWOK.Protocol.Instance().use_network(A.WOWOK.ENTRYPOINT.testnet);
 // Create server instance
 const server = new Server({
@@ -169,6 +170,7 @@ async function main() {
             name: A.ToolName.QUERY_WOWOK_PROTOCOL,
             description: A.QueryWowokProtocolSchemaDescription,
             inputSchema: A.QueryWowokProtocolSchemaInput(),
+            outputSchema: A.QueryWowokProtocolResultSchemaOutput(),
         },
         {
             name: A.ToolName.QUERY_OBJECTS,
@@ -184,6 +186,7 @@ async function main() {
             name: A.ToolName.QUERY_PERMISSIONS,
             description: A.QueryPermissionSchemaDescription,
             inputSchema: A.QueryPermissionSchemaInput(),
+            outputSchema: A.QueryPermissionResultSchemaOutput(),
         },
         {
             name: A.ToolName.QUERY_TABLE_ITEMS_LIST,
@@ -199,6 +202,7 @@ async function main() {
             name: A.ToolName.QUERY_PERSONAL,
             description: A.QueryPermissionSchemaDescription,
             inputSchema: A.QueryPersonalSchemaInput(),
+            outputSchema: A.UrlResultSchemaOutput(),
         },
         {
             name: A.ToolName.QUERY_RECEIVED,
@@ -229,6 +233,7 @@ async function main() {
             name: A.ToolName.OP_PERMISSION,
             description: A.CallPermissionSchemaDescription,
             inputSchema: A.CallPermissionSchemaInput(),
+            outputSchema: A.ObjectChangedSchemaOutput()
         },
         {
             name: A.ToolName.OP_MACHINE,
@@ -244,6 +249,7 @@ async function main() {
             name: A.ToolName.OP_PERSONAL,
             description: A.CallPersonalSchemaDescription,
             inputSchema: A.CallPersonalSchemaInput(),
+            outputSchema: A.ObjectChangedSchemaOutput()
         },
         {
             name: A.ToolName.OP_ARBITRATION,
@@ -426,21 +432,40 @@ async function main() {
             switch (request.params.name) {
                 case A.ToolName.QUERY_WOWOK_PROTOCOL: {
                     const r = A.QueryWowokProtocolSchema.parse(request.params.arguments);
-                    if (r.name === A.WOWOK_PROTOCOL_INFO.BuiltInPermissions) {
-                        return { content: [{ type: "text", text: JSON.stringify(A.WOWOK.PermissionInfo) }], };
+                    var built_in_permissions;
+                    var queries_for_guard;
+                    if (r.built_in_permissions) {
+                        built_in_permissions = r.built_in_permissions.module === 'all'
+                            ? A.WOWOK.PermissionInfo
+                            : A.WOWOK.PermissionInfo.filter(v => r.built_in_permissions.module.includes(v.module));
                     }
-                    else if (r.name === A.WOWOK_PROTOCOL_INFO.GuardQueryCommands) {
-                        return { content: [{ type: "text", text: JSON.stringify(A.WOWOK.PermissionInfo) }], };
+                    else if (r.queries_for_guard) {
+                        const filterd = r.queries_for_guard.module === 'all'
+                            ? A.WOWOK.GUARD_QUERIES
+                            : A.WOWOK.GUARD_QUERIES.filter(v => r.queries_for_guard.module.includes(v.module));
+                        queries_for_guard = filterd.map(v => {
+                            return { ...v,
+                                parameters: v.parameters.map((p, index) => {
+                                    const f = A.WOWOK.SER_VALUE.find(i => i.type === p);
+                                    const d = v.parameters_description?.[index];
+                                    return { name: f?.name ?? 'unknown', type: p, description: d ?? 'unknown' };
+                                }),
+                                return: {
+                                    type: v.return,
+                                    name: A.WOWOK.SER_VALUE.find(i => i.type === v.return)?.name ?? 'unknown',
+                                },
+                                parameters_description: undefined
+                            };
+                        });
                     }
-                    return {
-                        content: [{ type: "text", text: 'Invalid query name for WOWOK protocol: ' + r.name }],
-                    };
+                    const output = { built_in_permissions: built_in_permissions, queries_for_guard: queries_for_guard };
+                    return { content: [{ type: "text", text: JSON.stringify(output) }], output };
                 }
                 case A.ToolName.QUERY_OBJECTS: {
                     const args = A.QueryObjectsSchema.parse(request.params.arguments);
                     const r = await A.query_objects(args);
                     return {
-                        content: [{ type: "text", text: JSON.stringify(r) }],
+                        content: [{ type: "text", text: JSON.stringify(r) }, A.ObjectsUrlMaker(r.objects ? r.objects.map(v => v.object) : [])],
                     };
                 }
                 case A.ToolName.QUERY_EVENTS: {
@@ -453,15 +478,33 @@ async function main() {
                 case A.ToolName.QUERY_PERMISSIONS: {
                     const args = A.QueryPermissionSchema.parse(request.params.arguments);
                     const r = await A.query_permission(args);
+                    var items;
+                    if (r) {
+                        const r2 = await A.query_objects({ objects: [r.object] });
+                        var biz;
+                        if (r2.objects && r2.objects[0].type === 'Permission') {
+                            biz = r2.objects[0].biz_permission;
+                        }
+                        items = r.items?.filter(v => v.permission).map(v => {
+                            const p = A.WOWOK.PermissionInfo.find(i => i.index === v.query);
+                            if (p) {
+                                return { ...p, guard: v.guard };
+                            }
+                            else {
+                                return { index: v.query, guard: v.guard, description: 'biz-permission', module: '', name: biz?.find(i => i.id === v.query)?.name ?? '' };
+                            }
+                        });
+                    }
+                    const output = { ...r, items: items };
                     return {
-                        content: [{ type: "text", text: JSON.stringify(r) }],
+                        content: [{ type: "text", text: JSON.stringify(r) }, output],
                     };
                 }
                 case A.ToolName.QUERY_PERSONAL: {
                     const args = A.QueryPersonalSchema.parse(request.params.arguments);
                     const r = await A.query_personal(args);
                     return {
-                        content: [{ type: "text", text: JSON.stringify(r) }],
+                        content: [{ type: "text", text: JSON.stringify(r) }, A.UrlResultMaker(r?.object)],
                     };
                 }
                 case A.ToolName.QUERY_TABLE_ITEMS_LIST: {
@@ -568,63 +611,47 @@ async function main() {
                 }
                 case A.ToolName.OP_PERSONAL: {
                     const args = A.CallPersonalSchema.parse(request.params.arguments);
+                    const addr = await A.Account.Instance().get_address(args.account ?? undefined);
+                    const r = await A.call_personal(args);
                     return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_personal(args)) }],
+                        content: [{ type: "text", text: JSON.stringify(r) }, A.UrlResultMaker(addr)],
                     };
                 }
                 case A.ToolName.OP_MACHINE: {
                     const args = A.CallMachineSchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_machine(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_machine(args));
                 }
                 case A.ToolName.OP_SERVICE: {
                     const args = A.CallServiceSchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_service(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_service(args));
                 }
                 case A.ToolName.OP_PERMISSION: {
                     const args = A.CallPermissionSchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_permission(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_permission(args));
                 }
                 case A.ToolName.OP_ARBITRATION: {
                     const args = A.CallArbitrationSchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_arbitration(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_arbitration(args));
                 }
                 case A.ToolName.OP_REPLACE_PERMISSION_OBJECT: {
                     const args = A.CallObejctPermissionSchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_transfer_permission(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_transfer_permission(args));
                 }
                 case A.ToolName.OP_TREASURY: {
                     const args = A.CallTreasurySchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_treasury(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_treasury(args));
                 }
                 case A.ToolName.OP_REPOSITORY: {
                     const args = A.CallRepositorySchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_repository(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_repository(args));
                 }
                 case A.ToolName.OP_DEMAND: {
                     const args = A.CallDemandSchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_demand(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_demand(args));
                 }
                 case A.ToolName.OP_GUARD: {
                     const args = A.CallGuardSchema.parse(request.params.arguments);
-                    return {
-                        content: [{ type: "text", text: JSON.stringify(await A.call_guard(args)) }],
-                    };
+                    return A.ObjectOperationResult(await A.call_guard(args));
                 }
                 case A.ToolName.OP_ACCOUNT: {
                     const args = A.AccountOperationSchema.parse(request.params.arguments);

@@ -12,6 +12,8 @@ Website: [https://wowok.net/](https://wowok.net/)
 Docs: [https://github.com/wowok-ai/wowok/wiki](https://github.com/wowok-ai/wowok/wiki)   
 X: [https://x.com/Wowok_Ai](https://x.com/Wowok_Ai)
 
+## Notice
+If your AI client cannot display or invoke all the tools, you can use the Standalone MCP Servers: [https://github.com/wowok-ai/mcpServers](https://github.com/wowok-ai/mcpServers)
 
 ## Setup   
 #### NPX   
