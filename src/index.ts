@@ -17,7 +17,7 @@ A.WOWOK.Protocol.Instance().use_network(A.WOWOK.ENTRYPOINT.testnet);
 // Create server instance
 const server = new Server({
     name: "wowok",
-    version: "1.3.33",
+    version: "1.2.34",
     description: `WoWok is a web3 collaboration protocol that enables users to create, collaborate, and transact on their own terms. It provides a set of tools and services that allow users to build and manage their own decentralized applications (dApps) and smart contracts.
     This server provides a set of tools and resources for querying and managing on-chain objects, events, and permissions in the WoWok protocol. It allows users to interact with the blockchain and perform various operations such as querying objects, events, permissions, and personal information, as well as performing on-chain operations like creating or updating objects, managing permissions, and more.
     It also provides local operations for managing your accounts and personal marks and information, allowing users to store and retrieve personal data securely on their devices.`,
@@ -189,13 +189,13 @@ async function main() {
             name: A.ToolName.QUERY_WOWOK_PROTOCOL,
             description: A.QueryWowokProtocolSchemaDescription,
             inputSchema: A.QueryWowokProtocolSchemaInput()  as ToolInput,
-            outputSchema: A.QueryWowokProtocolResultSchemaOutput() as ToolOutput,
+            //outputSchema: A.QueryWowokProtocolResultSchemaOutput() as ToolOutput,
         }, 
         {
             name: A.ToolName.QUERY_OBJECTS,
             description: A.QueryObjectsSchemaDescription,
             inputSchema: A.QueryObjectsSchemaInput()  as ToolInput,
-            outputSchema: A.ObjectsUrlSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectsUrlSchemaOutput() as ToolOutput
         },    
         {
             name: A.ToolName.QUERY_LOCAL,
@@ -206,7 +206,7 @@ async function main() {
             name: A.ToolName.QUERY_PERMISSIONS,
             description: A.QueryPermissionSchemaDescription,
             inputSchema: A.QueryPermissionSchemaInput()  as ToolInput,
-            outputSchema: A.QueryPermissionResultSchemaOutput() as ToolOutput,
+            //outputSchema: A.QueryPermissionResultSchemaOutput() as ToolOutput,
         },
         {
             name: A.ToolName.QUERY_TABLE_ITEMS_LIST,
@@ -222,7 +222,7 @@ async function main() {
             name: A.ToolName.QUERY_PERSONAL,
             description: A.QueryPersonalSchemaDescription,
             inputSchema: A.QueryPersonalSchemaInput()  as ToolInput,
-            outputSchema: A.UrlResultSchemaOutput() as ToolOutput,
+            //outputSchema: A.UrlResultSchemaOutput() as ToolOutput,
         },
         {
             name: A.ToolName.QUERY_RECEIVED,
@@ -253,61 +253,61 @@ async function main() {
             name: A.ToolName.OP_PERMISSION,
             description: A.CallPermissionSchemaDescription,
             inputSchema: A.CallPermissionSchemaInput()  as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
         {
             name: A.ToolName.OP_MACHINE,
             description: A.CallMachineSchemaDescription,
             inputSchema: A.CallMachineSchemaInput()  as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
         {
             name: A.ToolName.OP_SERVICE,
             description: A.CallServiceSchemaDescription,
             inputSchema: A.CallServiceSchemaInput()  as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
         {
             name: A.ToolName.OP_PERSONAL,
             description: A.CallPersonalSchemaDescription,
             inputSchema: A.CallPersonalSchemaInput() as ToolInput,
-            outputSchema: A.UrlResultSchemaOutput() as ToolOutput,
+            //outputSchema: A.UrlResultSchemaOutput() as ToolOutput,
         },
         {
             name: A.ToolName.OP_ARBITRATION,
             description: A.CallArbitrationSchemaDescription,
             inputSchema: A.CallArbitrationSchemaInput()  as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
         {
             name: A.ToolName.OP_REPLACE_PERMISSION_OBJECT,
             description: A.CallObejctPermissionSchemaDescription,
             inputSchema: A.CallObejctPermissionSchemaInput()  as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
         {
             name: A.ToolName.OP_TREASURY,
             description: A.CallTreasurySchemaDescription,
             inputSchema: A.CallTreasurySchemaInput()  as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
         {
             name: A.ToolName.OP_REPOSITORY,
             description: A.CallRepositorySchemaDescription,
             inputSchema: A.CallRepositorySchemaInput()  as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
         {
             name: A.ToolName.OP_DEMAND,
             description: A.CallDemandSchemaDescription,
             inputSchema: A.CallDemandSchemaInput()  as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
         {
             name: A.ToolName.OP_GUARD,
             description: A.CallGuardSchemaDescription,
             inputSchema: A.CallGuardSchemaInput() as ToolInput,
-            outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
+            //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
     ]
 
@@ -443,7 +443,7 @@ async function main() {
             throw new Error("Arguments are required");
           }
       
-          switch (request.params.name) {
+        switch (request.params.name) {
             case A.ToolName.QUERY_WOWOK_PROTOCOL: {
                 const r = A.QueryWowokProtocolSchema.parse(request.params.arguments);
                 var built_in_permissions: any ; var queries_for_guard: any;
@@ -475,7 +475,7 @@ async function main() {
                 }
                 
                 const output = {built_in_permissions:built_in_permissions, queries_for_guard:queries_for_guard};
-                return { content: [{ type: "text", text:JSON.stringify(output)}],output };
+                return { content: [{ type: "text", text:JSON.stringify(output)}] };
             }
 
             case A.ToolName.QUERY_OBJECTS: {
@@ -483,7 +483,7 @@ async function main() {
               const r = await A.query_objects(args);
               const output = A.ObjectsUrlMaker(r.objects ? r.objects.map(v=>v.object) : []);
               return {
-                content: [{ type: "text", text: JSON.stringify(r) },], output
+                content: [{ type: "text", text: JSON.stringify({objects:output, raw_data:JSON.stringify(r)}) }]
               };
             }
       
@@ -519,7 +519,7 @@ async function main() {
 
                 const output = {...r, items: items};
                 return {
-                  content: [{ type: "text", text: JSON.stringify(r) }], output
+                  content: [{ type: "text", text: JSON.stringify(output) }]
                 };
             }
 
@@ -531,7 +531,7 @@ async function main() {
                 }
                 const output = A.UrlResultMaker(r?.object);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r) }], output
+                    content: [{ type: "text", text: JSON.stringify({objects:[output], raw_data:JSON.stringify(r)}) }]
                 };
             }
             
@@ -647,53 +647,53 @@ async function main() {
                 const r = await A.call_personal(args);
                 const output = A.UrlResultMaker(addr);
                 return {
-                    content: [{ type: "text", text: JSON.stringify(r) }], output
+                    content: [{ type: "text", text: JSON.stringify({objects:[output], raw_data:JSON.stringify(r)}) }]
                 };
             }
 
             case A.ToolName.OP_MACHINE: {
                 const args = A.CallMachineSchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_machine(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_machine(args))}]}
             }
 
             case A.ToolName.OP_SERVICE: {
                 const args = A.CallServiceSchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_service(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_service(args))}]}
             }
 
             case A.ToolName.OP_PERMISSION: {
                 const args = A.CallPermissionSchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_permission(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_permission(args))}]}
             }
 
             case A.ToolName.OP_ARBITRATION: {
                 const args = A.CallArbitrationSchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_arbitration(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_arbitration(args))}]}
             }
 
             case A.ToolName.OP_REPLACE_PERMISSION_OBJECT: {
                 const args = A.CallObejctPermissionSchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_transfer_permission(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_transfer_permission(args))}]}
             }
 
             case A.ToolName.OP_TREASURY: {
                 const args = A.CallTreasurySchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_treasury(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_treasury(args))}]}
             }
 
             case A.ToolName.OP_REPOSITORY: {
                 const args = A.CallRepositorySchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_repository(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_repository(args))}]}
             }
 
             case A.ToolName.OP_DEMAND: {
                 const args = A.CallDemandSchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_demand(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_demand(args))}]}
             }
 
             case A.ToolName.OP_GUARD: {
                 const args = A.CallGuardSchema.parse(request.params.arguments);
-                return A.ObjectOperationResult(await A.call_guard(args));
+                return {content: [{ type: "text", text: A.ObjectOperationResult(await A.call_guard(args))}]}
             }
 
             case A.ToolName.OP_ACCOUNT: {
