@@ -452,7 +452,6 @@ async function main() {
                     built_in_permissions = r.built_in_permissions.module === 'all' 
                         ? A.WOWOK.PermissionInfo 
                         : A.WOWOK.PermissionInfo.filter(v => (r.built_in_permissions!.module as string[]).includes(v.module));
-
                 } else if (r.queries_for_guard) {   
                     const filterd = r.queries_for_guard.module === 'all' 
                         ? A.WOWOK.GUARD_QUERIES 
