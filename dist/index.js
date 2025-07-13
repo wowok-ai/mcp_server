@@ -9,7 +9,7 @@ A.WOWOK.Protocol.Instance().use_network(A.WOWOK.ENTRYPOINT.testnet);
 // Create server instance
 const server = new Server({
     name: "wowok",
-    version: "1.2.35",
+    version: "1.3.37",
     description: `WoWok is a web3 collaboration protocol that enables users to create, collaborate, and transact on their own terms. It provides a set of tools and services that allow users to build and manage their own decentralized applications (dApps) and smart contracts.
     This server provides a set of tools and resources for querying and managing on-chain objects, events, and permissions in the WoWok protocol. It allows users to interact with the blockchain and perform various operations such as querying objects, events, permissions, and personal information, as well as performing on-chain operations like creating or updating objects, managing permissions, and more.
     It also provides local operations for managing your accounts and personal marks and information, allowing users to store and retrieve personal data securely on their devices.`,
@@ -496,16 +496,16 @@ async function main() {
                             biz = r2.objects[0].biz_permission;
                         }
                         items = r.items?.filter(v => v.permission).map(v => {
-                            const p = A.WOWOK.PermissionInfo.find(i => i.index === v.query);
+                            const p = A.WOWOK.PermissionInfo.find(i => i.index == v.query);
                             if (p) {
                                 return { ...p, guard: v.guard };
                             }
                             else {
-                                return { index: v.query, guard: v.guard, description: 'biz-permission', module: '', name: biz?.find(i => i.id === v.query)?.name ?? '' };
+                                return { index: v.query, guard: v.guard, description: 'biz-permission', module: '', name: biz?.find(i => i.id == v.query)?.name ?? '' };
                             }
                         });
                     }
-                    const output = { ...r, items: items };
+                    const output = { ...r, items: items, url: A.UrlResultMaker(r.object) };
                     return {
                         content: [{ type: "text", text: JSON.stringify(output) }]
                     };
@@ -695,7 +695,6 @@ async function main() {
         catch (error) {
             throw new Error(`Invalid input: ${JSON.stringify(error)}`);
         }
-        return { content: [] };
     });
     await server.connect(transport);
     // Cleanup on exit
