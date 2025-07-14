@@ -30,3 +30,15 @@ If your AI client cannot display or invoke all the tools, you can use the Standa
   }
 }
 ```
+
+## How to use     
+#### Ask AI:    
+```
+Functions provided by the MCP server, how to use, and scenario introduction.
+```
+
+#### Create Account    
+Create a new account through the 'wowok_personal_mcp_server', and transfer some SUI tokens to the new account via the faucet or another wallet.         
+wowok_personal_mcp_server：[https://www.npmjs.com/package/wowok_personal_mcp_server](https://www.npmjs.com/package/wowok_personal_mcp_server)     
+ 
+#### Examples    
