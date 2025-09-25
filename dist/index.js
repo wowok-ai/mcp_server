@@ -5,11 +5,10 @@ import { CallToolRequestSchema, ListResourcesRequestSchema, ListResourceTemplate
 import * as A from 'wowok_agent';
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 const ToolOutputSchema = ToolSchema.shape.outputSchema;
-A.WOWOK.Protocol.Instance().use_network(A.WOWOK.ENTRYPOINT.testnet);
 // Create server instance
 const server = new Server({
     name: "wowok",
-    version: "1.3.47",
+    version: "1.3.63",
     description: `WoWok is a web3 collaboration protocol that enables users to create, collaborate, and transact on their own terms. It provides a set of tools and services that allow users to build and manage their own decentralized applications (dApps) and smart contracts.
     This server provides a set of tools and resources for querying and managing on-chain objects, events, and permissions in the WoWok protocol. It allows users to interact with the blockchain and perform various operations such as querying objects, events, permissions, and personal information, as well as performing on-chain operations like creating or updating objects, managing permissions, and more.
     It also provides local operations for managing your accounts and personal marks and information, allowing users to store and retrieve personal data securely on their devices. ${A.NoticeFieldsOrder}`,
@@ -686,6 +685,18 @@ async function main() {
                     await A.local_info_operation(args);
                     return {
                         content: [{ type: "text", text: 'success' }],
+                    };
+                }
+                case A.ToolName.OP_COIN_INFO: {
+                    const args = A.CoinInfoFetchSchema.parse(request.params.arguments);
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(await A.coin_info_operation(args)) }],
+                    };
+                }
+                case A.ToolName.QUERY_COIN_INFO: {
+                    const args = A.QueryCoinInfoSchema.parse(request.params.arguments);
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(await A.coin_info_query(args)) }],
                     };
                 }
                 default:
