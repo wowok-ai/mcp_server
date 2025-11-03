@@ -17,7 +17,7 @@ type ToolOutput = z.infer<typeof ToolOutputSchema>;
 // Create server instance
 const server = new Server({
     name: "wowok",
-    version: "1.4.4",
+    version: "1.4.5",
     description: `WoWok is a web3 collaboration protocol that enables users to create, collaborate, and transact on their own terms. It provides a set of tools and services that allow users to build and manage their own decentralized applications (dApps) and smart contracts.
     This server provides a set of tools and resources for querying and managing on-chain objects, events, and permissions in the WoWok protocol. It allows users to interact with the blockchain and perform various operations such as querying objects, events, permissions, and personal information, as well as performing on-chain operations like creating or updating objects, managing permissions, and more.
     It also provides local operations for managing your accounts and personal marks and information, allowing users to store and retrieve personal data securely on their devices. ${A.NoticeFieldsOrder}`,
@@ -309,6 +309,18 @@ async function main() {
             inputSchema: A.CallGuardSchemaInput() as ToolInput,
             //outputSchema: A.ObjectChangedSchemaOutput() as ToolOutput
         },
+        {
+            name: A.ToolName.QUERY_BUILT_IN_PERMISSIONS,
+            description: A.QueryBuiltinPermissionsDescription,
+            inputSchema: A.BuiltInPermissionSchemaInput()  as ToolInput,
+            //outputSchema: A.BuiltInPermissionSchemaOutput() as ToolOutput
+        },
+        {
+            name: A.ToolName.QUERY_GUARD_QUERIES,
+            description: A.QueryGuardQueriesDescription,
+            inputSchema: A.QueriesForGuardSchemaInput()  as ToolInput,
+            //outputSchema: A.BuiltInPermissionSchemaOutput() as ToolOutput
+        }
     ]
 
     const transport = new StdioServerTransport();
@@ -730,6 +742,23 @@ async function main() {
                 return {
                     content: [{ type: "text", text: JSON.stringify(await A.coin_info_query(args))}],
                 }
+            }
+
+            case A.ToolName.QUERY_BUILT_IN_PERMISSIONS: {
+                const args = A.BuiltInPermissionSchema.parse(request.params.arguments);
+                const built_in_permissions = args.module === 'all' 
+                        ? A.WOWOK.PermissionInfo 
+                        : A.WOWOK.PermissionInfo.filter(v => (args.module as string[]).includes(v.module));
+                return {content: [{ type: "text", text: JSON.stringify(built_in_permissions)}]};
+
+            }
+
+            case A.ToolName.QUERY_GUARD_QUERIES: {
+                const args = A.QueriesForGuardSchema.parse(request.params.arguments);
+                const guard_queries = args.module === 'all' 
+                        ? A.WOWOK.GUARD_QUERIES 
+                        : A.WOWOK.GUARD_QUERIES.filter(v => (args.module as string[]).includes(v.module));
+                return {content: [{ type: "text", text: JSON.stringify(guard_queries)}]};
             }
 
             default:
